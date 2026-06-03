@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SabiFlow - 侘寂漫遊與理財 v2.2</title>
+    <title>Travel - 侘寂漫遊與理財 v2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -15,43 +15,46 @@
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
         const ALLOWED = ["annwei.acc@gmail.com","chenyc0615@gmail.com"];
-        const app = initializeApp({apiKey:"AIzaSyCDOPCY04DR7HqNsMjIVSUDGkP83F6Z4Ws",authDomain:"travel-app-f5a47.firebaseapp.com",projectId:"travel-app-f5a47",storageBucket:"travel-app-f5a47.firebasestorage.app",messagingSenderId:"318106369100",appId:"1:318106369100:web:3e561384390ff411b288e9",measurementId:"G-FM7E9T3DF2"});
-        getAnalytics(app);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const LS = document.getElementById('login-screen');
-        const MA = document.getElementById('app');
-        const LE = document.getElementById('login-error');
-        onAuthStateChanged(auth, u => {
+        const _app = initializeApp({apiKey:"AIzaSyCDOPCY04DR7HqNsMjIVSUDGkP83F6Z4Ws",authDomain:"travel-app-f5a47.firebaseapp.com",projectId:"travel-app-f5a47",storageBucket:"travel-app-f5a47.firebasestorage.app",messagingSenderId:"318106369100",appId:"1:318106369100:web:3e561384390ff411b288e9",measurementId:"G-FM7E9T3DF2"});
+        getAnalytics(_app);
+        const _auth = getAuth(_app);
+        const _db = getFirestore(_app);
+        onAuthStateChanged(_auth, u => {
+            const ls = document.getElementById('login-screen');
+            const ma = document.getElementById('app');
+            const ed = document.getElementById('user-email-display');
+            const le = document.getElementById('login-error');
             if (u && ALLOWED.includes(u.email.toLowerCase())) {
-                LS.style.display='none'; MA.style.display='flex';
-                document.getElementById('user-email-display').textContent = u.email;
+                ls.style.display='none'; ma.style.display='flex';
+                if(ed) ed.textContent = u.email;
                 window._uid = u.uid;
                 if (window._onAuthReady) window._onAuthReady(u.uid);
             } else {
-                if (u) signOut(auth);
-                LS.style.display='flex'; MA.style.display='none'; window._uid=null;
+                if (u) signOut(_auth);
+                ls.style.display='flex'; ma.style.display='none'; window._uid=null;
             }
         });
         window.loginWithGoogle = async () => {
-            LE.textContent='';
+            const le = document.getElementById('login-error');
+            le.textContent='';
             try {
-                const r = await signInWithPopup(auth, new GoogleAuthProvider());
-                if (!ALLOWED.includes(r.user.email.toLowerCase())) { await signOut(auth); LE.textContent='此帳號無權限登入'; }
-            } catch(e) { LE.textContent='登入失敗：'+e.message; }
+                const r = await signInWithPopup(_auth, new GoogleAuthProvider());
+                if (!ALLOWED.includes(r.user.email.toLowerCase())) { await signOut(_auth); le.textContent='此帳號無權限登入'; }
+            } catch(e) { le.textContent='登入失敗：'+e.message; }
         };
         window.loginWithEmail = async () => {
-            LE.textContent='';
+            const le = document.getElementById('login-error');
+            le.textContent='';
             const email = document.getElementById('login-email').value.trim();
             const pw = document.getElementById('login-password').value;
-            if (!ALLOWED.includes(email.toLowerCase())) { LE.textContent='此 Email 無權限登入'; return; }
-            try { await signInWithEmailAndPassword(auth, email, pw); }
-            catch(e) { LE.textContent='帳號或密碼錯誤'; }
+            if (!ALLOWED.includes(email.toLowerCase())) { le.textContent='此 Email 無權限登入'; return; }
+            try { await signInWithEmailAndPassword(_auth, email, pw); }
+            catch(e) { le.textContent='帳號或密碼錯誤'; }
         };
-        window.logout = () => signOut(auth);
-        window._fsGet = async (uid,id) => { const s=await getDoc(doc(db,'users',uid,'apps',id)); return s.exists()?s.data():null; };
-        window._fsSave = async (uid,id,data) => { await setDoc(doc(db,'users',uid,'apps',id),data,{merge:true}); };
-        window._fsWatch = (uid,id,cb) => onSnapshot(doc(db,'users',uid,'apps',id), s => s.exists()&&cb(s.data()));
+        window.logout = () => signOut(_auth);
+        window._fsGet  = async (uid,id) => { const s=await getDoc(doc(_db,'users',uid,'apps',id)); return s.exists()?s.data():null; };
+        window._fsSave = async (uid,id,data) => setDoc(doc(_db,'users',uid,'apps',id),data,{merge:true});
+        window._fsWatch = (uid,id,cb) => onSnapshot(doc(_db,'users',uid,'apps',id), s => s.exists()&&cb(s.data()));
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap');
@@ -68,7 +71,7 @@
 <div id="login-screen" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center bg-[#f4f1ea]">
   <div class="w-full max-w-sm mx-4 bg-[#faf8f5] rounded-3xl shadow-sm border border-[#ede9df] p-8 space-y-6">
     <div class="text-center space-y-1">
-      <p class="text-xs tracking-widest text-[#a8a297] uppercase">SabiFlow</p>
+      <p class="text-xs tracking-widest text-[#a8a297] uppercase">Travel</p>
       <h2 class="text-xl font-medium text-[#4a463f]">歡迎回來</h2>
     </div>
     <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-xl border border-[#ede9df] bg-white hover:bg-[#f4f1ea] transition-colors text-sm text-[#4a463f]">
@@ -88,7 +91,7 @@
 
 <header class="px-6 pt-6 pb-4 flex justify-between items-center border-b border-[#ede9df]/60">
     <div>
-        <h1 class="text-xs tracking-widest text-[#a8a297] font-light uppercase">SabiFlow</h1>
+        <h1 class="text-xs tracking-widest text-[#a8a297] font-light uppercase">Travel</h1>
         <p class="text-lg font-medium text-[#4a463f]">{{ currentTabTitle }}</p>
         <p id="user-email-display" class="text-[10px] text-[#a8a297] truncate max-w-[160px]"></p>
     </div>
@@ -784,11 +787,7 @@
 </div>
 
 <div v-if="currentTab === 'settings'" class="space-y-6">
-    <div class="bg-[#4a463f] text-[#faf8f5] rounded-2xl p-4 space-y-1">
-        <p class="text-[10px] tracking-widest opacity-60 uppercase">App 識別碼（資料隔離前綴）</p>
-        <p class="text-sm font-mono font-medium tracking-wide">{{ appId }}</p>
-        <p class="text-[10px] opacity-50 leading-relaxed">複製此檔案後，在 &lt;script&gt; 最頂端將 APP_ID 改為不同名稱，兩個檔案的資料即可完全獨立。</p>
-    </div>
+
     <div class="bg-white p-4 rounded-2xl border border-[#ede9df] space-y-3">
         <h3 class="text-xs uppercase tracking-wider text-[#4a463f] font-semibold border-b pb-2 flex items-center justify-between">
             <span>支出類別格局管理</span>
@@ -1885,7 +1884,7 @@
                 _st=setTimeout(async()=>{
                     if(!window._uid)return;
                     try{ await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets.value,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,updatedAt:Date.now()}); }
-                    catch(e){console.warn('fs save',e);}
+                    catch(e){console.warn('Firestore save error',e);}
                 },800);
             };
 
@@ -2158,7 +2157,7 @@
                     try{
                         _loadCloud(await window._fsGet(uid,APP_ID));
                         if(!_w){_w=true;window._fsWatch(uid,APP_ID,d=>{if(d.updatedAt!==window._lat){window._lat=d.updatedAt;_loadCloud(d);}});}
-                    }catch(e){console.warn('fs load',e);}
+                    }catch(e){console.warn('Firestore load',e);}
                 };
                 if(window._uid)window._onAuthReady(window._uid);
             });
