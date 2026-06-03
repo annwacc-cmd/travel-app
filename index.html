@@ -52,9 +52,10 @@
             catch(e) { le.textContent='帳號或密碼錯誤'; }
         };
         window.logout = () => signOut(_auth);
-        window._fsGet  = async (uid,id) => { const s=await getDoc(doc(_db,'users',uid,'apps',id)); return s.exists()?s.data():null; };
-        window._fsSave = async (uid,id,data) => setDoc(doc(_db,'users',uid,'apps',id),data,{merge:true});
-        window._fsWatch = (uid,id,cb) => onSnapshot(doc(_db,'users',uid,'apps',id), s => s.exists()&&cb(s.data()));
+        // 共用資料：所有帳號讀寫同一份
+        window._fsGet  = async (uid,id) => { const s=await getDoc(doc(_db,'shared','data','apps',id)); return s.exists()?s.data():null; };
+        window._fsSave = async (uid,id,data) => setDoc(doc(_db,'shared','data','apps',id),data,{merge:true});
+        window._fsWatch = (uid,id,cb) => onSnapshot(doc(_db,'shared','data','apps',id), s => s.exists()&&cb(s.data()));
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap');
