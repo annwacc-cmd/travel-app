@@ -798,11 +798,7 @@
 </div>
 
 <div v-if="currentTab === 'settings'" class="space-y-6">
-    <div class="bg-[#4a463f] text-[#faf8f5] rounded-2xl p-4 space-y-1">
-        <p class="text-[10px] tracking-widest opacity-60 uppercase">App 識別碼（資料隔離前綴）</p>
-        <p class="text-sm font-mono font-medium tracking-wide">{{ appId }}</p>
-        <p class="text-[10px] opacity-50 leading-relaxed">複製此檔案後，在 &lt;script&gt; 最頂端將 APP_ID 改為不同名稱，兩個檔案的資料即可完全獨立。</p>
-    </div>
+
     <div class="bg-white p-4 rounded-2xl border border-[#ede9df] space-y-3">
         <h3 class="text-xs uppercase tracking-wider text-[#4a463f] font-semibold border-b pb-2 flex items-center justify-between">
             <span>支出類別格局管理</span>
@@ -1480,6 +1476,7 @@
                 tripInfo.value = { ...tripInfoForm.value };
                 localStorage.setItem(`${APP_ID}__trip_info`, JSON.stringify(tripInfo.value));
                 tripInfoModal.value = false;
+                saveToStorage();
                 showToast('行程資訊已更新');
             };
             const tripDuration = computed(() => {
@@ -1970,10 +1967,24 @@
                 localStorage.setItem(K('itineraries_v2'), JSON.stringify(itineraries.value));
                 localStorage.setItem(K('resources'), JSON.stringify(resources.value));
                 localStorage.setItem(K('checklist'), JSON.stringify(checklist.value));
+                localStorage.setItem(`${APP_ID}__map_pins`, JSON.stringify(mapPins.value));
+                localStorage.setItem(`${APP_ID}__trip_info`, JSON.stringify(tripInfo.value));
                 if(_st)clearTimeout(_st);
                 _st=setTimeout(async()=>{
                     if(!window._uid)return;
-                    try{ await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets.value,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,updatedAt:Date.now()}); }
+                    try{ await window._fsSave(window._uid,APP_ID,{
+                        categories:categories.value,
+                        paymethods:payMethods.value,
+                        budgets:categoryBudgets.value,
+                        expenses:expenses.value,
+                        itineraries_v2:itineraries.value,
+                        resources:resources.value,
+                        checklist:checklist.value,
+                        bookings:bookings.value,
+                        map_pins:mapPins.value,
+                        trip_info:tripInfo.value,
+                        updatedAt:Date.now()
+                    }); }
                     catch(e){console.warn('Firestore save error',e);}
                 },800);
             };
@@ -2368,6 +2379,8 @@
                 if(d.resources)resources.value=d.resources;
                 if(d.checklist)checklist.value=d.checklist;
                 if(d.bookings)bookings.value=d.bookings;
+                if(d.map_pins)mapPins.value=d.map_pins;
+                if(d.trip_info)tripInfo.value=d.trip_info;
                 nextTick(()=>lucide.createIcons());
             };
             onMounted(() => {
