@@ -2005,11 +2005,13 @@
                     showToast(`已從地圖移除`);
                 }
                 localStorage.setItem(`${APP_ID}__map_pins`, JSON.stringify(mapPins.value));
+                saveToStorage();
                 nextTick(() => lucide.createIcons());
             };
             const clearAllMapPins = () => {
                 mapPins.value = [];
                 localStorage.setItem(`${APP_ID}__map_pins`, JSON.stringify([]));
+                saveToStorage();
                 showToast('已清除所有釘選景點');
             };
             // Leaflet 地圖相關
@@ -2417,7 +2419,8 @@
                 bookings, bookingModal, bookingForm, openAddBooking, openEditBooking, saveBooking, deleteBooking, onBookingImageSelected, backupDayLabels, backupItinerariesByDay, openAddBackupItineraryModal, expandedBackupIdxSet, toggleBackupExpand, isBackupExpanded, editingBackupLabelIdx, editingBackupLabelValue, startEditBackupLabel, saveBackupLabel, addToSchedulePicker, openAddToSchedule, confirmAddToSchedule,
                 scanPhoto, scanForm, onScanPhotoSelected, clearScanPhoto, submitScanExpense, simulateScan,
                 excelImportModal, onExcelImport, confirmExcelImport,
-                mapPins, mapPinnedItems, isMapPinned, toggleMapPin, clearAllMapPins, mapCoords, mapGeoFailed, mapGeocoding, refreshLeafletMap
+                mapPins, mapPinnedItems, isMapPinned, toggleMapPin, clearAllMapPins, mapCoords, mapGeoFailed, mapGeocoding, refreshLeafletMap,
+                saveToStorage
             };
         }
     }).mount('#app');
