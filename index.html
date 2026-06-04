@@ -26,6 +26,8 @@
                 ls.style.display='none'; ma.style.display='flex';
                 const ed = document.getElementById('user-email-display');
                 if(ed) ed.textContent = u.email;
+                const ed2 = document.getElementById('user-email-display-side');
+                if(ed2) ed2.textContent = u.email;
                 window._uid = u.uid;
                 if (window._onAuthReady) window._onAuthReady(u.uid);
             } else {
@@ -68,7 +70,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
-<body class="min-h-screen flex justify-center items-stretch sm:p-4">
+<body class="min-h-screen bg-[#f4f1ea] flex justify-center items-stretch sm:p-4">
 <div id="login-screen" style="display:none;" class="fixed inset-0 z-50 flex items-center justify-center bg-[#f4f1ea]">
   <div class="w-full max-w-sm mx-4 bg-[#faf8f5] rounded-3xl shadow-sm border border-[#ede9df] p-8 space-y-6">
     <div class="text-center space-y-1">
@@ -88,7 +90,49 @@
     <p id="login-error" class="text-xs text-center text-red-400 min-h-4"></p>
   </div>
 </div>
-<div id="app" style="display:none;" class="w-full max-w-md bg-[#faf8f5] shadow-sm flex flex-col relative overflow-hidden sm:rounded-3xl border border-[#ede9df]">
+<div id="app" style="display:none;" class="w-full max-w-md lg:max-w-6xl bg-[#faf8f5] shadow-sm flex flex-col lg:flex-row relative overflow-hidden sm:rounded-3xl lg:rounded-3xl border border-[#ede9df]">
+
+<!-- Desktop side nav -->
+
+<aside class="hidden lg:flex flex-col w-52 border-r border-[#ede9df] bg-[#faf8f5] py-8 px-4 shrink-0">
+    <div class="mb-8 px-2">
+        <p class="text-xs tracking-widest text-[#a8a297] uppercase">Travel</p>
+        <p id="user-email-display-side" class="text-[10px] text-[#a8a297] truncate mt-1"></p>
+    </div>
+    <nav class="flex flex-col gap-1 flex-1">
+        <button @click="switchTab('home')" :class="currentTab==='home' ? 'bg-[#eae5da] text-[#4a463f]' : 'text-[#8c8577] hover:bg-[#f4f1ea]'" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left">
+            <i data-lucide="home" class="w-4 h-4 shrink-0"></i><span>首頁</span>
+        </button>
+        <button @click="switchTab('scan')" :class="currentTab==='scan' ? 'bg-[#eae5da] text-[#4a463f]' : 'text-[#8c8577] hover:bg-[#f4f1ea]'" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left">
+            <i data-lucide="scan" class="w-4 h-4 shrink-0"></i><span>掃描</span>
+        </button>
+        <button @click="switchTab('records')" :class="currentTab==='records' ? 'bg-[#eae5da] text-[#4a463f]' : 'text-[#8c8577] hover:bg-[#f4f1ea]'" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left">
+            <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i><span>明細</span>
+        </button>
+        <button @click="switchTab('itinerary')" :class="currentTab==='itinerary' ? 'bg-[#eae5da] text-[#4a463f]' : 'text-[#8c8577] hover:bg-[#f4f1ea]'" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left">
+            <i data-lucide="map-pin" class="w-4 h-4 shrink-0"></i><span>行程</span>
+        </button>
+        <button @click="switchTab('mapview')" :class="currentTab==='mapview' ? 'bg-[#eae5da] text-[#4a463f]' : 'text-[#8c8577] hover:bg-[#f4f1ea]'" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left">
+            <i data-lucide="map" class="w-4 h-4 shrink-0"></i>
+            <span>地圖</span>
+            <span v-if="mapPinnedItems.length" class="ml-auto w-5 h-5 bg-[#b8735c] text-white text-[9px] rounded-full flex items-center justify-center font-bold">{{ mapPinnedItems.length }}</span>
+        </button>
+        <button @click="switchTab('resources')" :class="currentTab==='resources' ? 'bg-[#eae5da] text-[#4a463f]' : 'text-[#8c8577] hover:bg-[#f4f1ea]'" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left">
+            <i data-lucide="book-open" class="w-4 h-4 shrink-0"></i><span>資源</span>
+        </button>
+        <button @click="switchTab('settings')" :class="currentTab==='settings' ? 'bg-[#eae5da] text-[#4a463f]' : 'text-[#8c8577] hover:bg-[#f4f1ea]'" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors text-left">
+            <i data-lucide="settings" class="w-4 h-4 shrink-0"></i><span>格局</span>
+        </button>
+    </nav>
+    <button onclick="logout()" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#8c8577] hover:bg-[#f4f1ea] transition-colors mt-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>登出</span>
+    </button>
+</aside>
+
+<!-- Main content area -->
+
+<div class="flex flex-col flex-1 min-w-0 relative overflow-hidden">
 
 <header class="px-6 pt-6 pb-4 flex justify-between items-center border-b border-[#ede9df]/60">
     <div>
@@ -1299,7 +1343,7 @@
     <span>{{ toast.message }}</span>
 </div>
 
-<nav class="absolute bottom-0 left-0 right-0 bg-[#faf8f5] border-t border-[#ede9df] px-1 py-1.5 flex justify-between items-center z-30 text-center">
+<nav class="lg:hidden absolute bottom-0 left-0 right-0 bg-[#faf8f5] border-t border-[#ede9df] px-1 py-1.5 flex justify-between items-center z-30 text-center">
     <button @click="switchTab('home')" :class="textClass('home')" class="flex flex-col items-center space-y-0.5 flex-1 min-w-0">
         <i data-lucide="home" class="w-4 h-4"></i>
         <span class="text-[8px] truncate w-full">首頁</span>
@@ -1333,7 +1377,9 @@
     </button>
 </nav>
 
-</div>
+</div><!-- end main content -->
+
+</div><!-- end app -->
 
 <script>
     const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
