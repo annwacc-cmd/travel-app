@@ -58,6 +58,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Delius&family=Noto+Serif+TC:wght@400;600&display=swap');
 
+
     body {
         font-family: 'Gaegu', 'Delius', 'Noto Serif TC', cursive, serif;
         background-color: #f6f3eb;
@@ -2085,16 +2086,17 @@
                 localStorage.setItem(K('resources'), JSON.stringify(resources.value));
                 localStorage.setItem(K('checklist'), JSON.stringify(checklist.value));
                 if(_st)clearTimeout(_st);
+                // 立刻標記為「儲存中」，阻止 watch 在這段時間覆蓋本地資料
                 window._saving = true;
+                const pendingTs = Date.now();
+                window._lat = pendingTs; // 預先佔位時間戳，讓 watch 的比對失敗
                 _st=setTimeout(async()=>{
                     if(!window._uid){ window._saving=false; return; }
                     try{
-                        const ts = Date.now();
-                        window._lat = ts;
-                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,updatedAt:ts});
+                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,updatedAt:pendingTs});
                     }
                     catch(e){console.warn('Firestore 同步手帳失敗',e);}
-                    finally{ setTimeout(()=>{ window._saving=false; }, 1500); }
+                    finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
                 },800);
             };
 
@@ -2489,8 +2491,16 @@
                 let _w=false;
                 window._onAuthReady = async(uid) => {
                     try{
-                        _loadCloud(await window._fsGet(uid,APP_ID));
-                        if(!_w){_w=true;window._fsWatch(uid,APP_ID,d=>{if(d.updatedAt!==window._lat){window._lat=d.updatedAt;_loadCloud(d);}});}
+                        // 初次載入：先把雲端資料拉下來，記錄時間戳
+                        const cloudData = await window._fsGet(uid,APP_ID);
+                        if(cloudData){ window._lat = cloudData.updatedAt; _loadCloud(cloudData); }
+                        // 之後只在「其他裝置寫入（updatedAt 不同）且本地沒在儲存」時才同步
+                        if(!_w){ _w=true; window._fsWatch(uid,APP_ID,d=>{
+                            if(d.updatedAt && d.updatedAt !== window._lat && !window._saving){
+                                window._lat=d.updatedAt;
+                                _loadCloud(d);
+                            }
+                        });}
                     }catch(e){console.warn('雲端手帳連線失敗',e);}
                 };
                 if(window._uid)window._onAuthReady(window._uid);
