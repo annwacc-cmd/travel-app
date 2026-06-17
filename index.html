@@ -59,97 +59,98 @@
         @import url('https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Delius&family=Noto+Serif+TC:wght@400;600&display=swap');
 
 
-    body {
-        font-family: 'Gaegu', 'Delius', 'Noto Serif TC', cursive, serif;
-        background-color: #f6f3eb;
-        background-image: 
-            linear-gradient(rgba(140, 133, 119, 0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(140, 133, 119, 0.08) 1px, transparent 1px);
-        background-size: 22px 22px;
-        color: #403c35;
-    }
-    
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+body {
+    font-family: 'Gaegu', 'Delius', 'Noto Serif TC', cursive, serif;
+    background-color: #f6f3eb;
+    background-image: 
+        linear-gradient(rgba(140, 133, 119, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(140, 133, 119, 0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+    color: #403c35;
+}
 
-    /* 手繪塗鴉邊框（鉛筆炭筆質感） */
-    .sketch-card {
-        background-color: #fffdf9;
-        border: 2px solid #5c554a;
-        border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
-        box-shadow: 4px 6px 0px rgba(92, 85, 74, 0.12);
-    }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    .sketch-btn {
-        border: 2px solid #5c554a;
-        border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
-        background-color: #fffdf9;
-        transition: transform 0.1s, box-shadow 0.1s;
-        box-shadow: 2px 3px 0px #5c554a;
-    }
+/* 手繪塗鴉邊框（鉛筆炭筆質感） */
+.sketch-card {
+    background-color: #fffdf9;
+    border: 2px solid #5c554a;
+    border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+    box-shadow: 4px 6px 0px rgba(92, 85, 74, 0.12);
+}
 
-    .sketch-btn:active {
-        transform: translate(1px, 2px);
-        box-shadow: 0px 1px 0px #5c554a;
-    }
+.sketch-btn {
+    border: 2px solid #5c554a;
+    border-radius: 255px 15px 225px 15px/15px 225px 15px 255px;
+    background-color: #fffdf9;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 2px 3px 0px #5c554a;
+}
 
-    .sketch-input {
-        border: 2px solid #5c554a;
-        border-radius: 120px 10px 110px 10px/10px 110px 10px 120px;
-        background-color: #fffdf9;
-    }
+.sketch-btn:active {
+    transform: translate(1px, 2px);
+    box-shadow: 0px 1px 0px #5c554a;
+}
 
-    .sketch-hr {
-        border: none;
-        border-top: 2px dashed #8c8577;
-        height: 0;
-    }
+.sketch-input {
+    border: 2px solid #5c554a;
+    border-radius: 120px 10px 110px 10px/10px 110px 10px 120px;
+    background-color: #fffdf9;
+}
 
-    /* 螢光筆塗鴉效果 */
-    .highlight-yellow {
-        background: linear-gradient(100deg, rgba(254, 240, 138, 0) 1%, rgba(254, 240, 138, 0.8) 5%, rgba(254, 240, 138, 0.7) 95%, rgba(254, 240, 138, 0.2) 99%);
-        padding: 0 4px;
-        border-radius: 4px;
-    }
+.sketch-hr {
+    border: none;
+    border-top: 2px dashed #8c8577;
+    height: 0;
+}
 
-    .highlight-green {
-        background: linear-gradient(100deg, rgba(187, 247, 208, 0) 1%, rgba(187, 247, 208, 0.8) 5%, rgba(187, 247, 208, 0.7) 95%, rgba(187, 247, 208, 0.2) 99%);
-        padding: 0 4px;
-        border-radius: 4px;
-    }
+/* 螢光筆塗鴉效果 */
+.highlight-yellow {
+    background: linear-gradient(100deg, rgba(254, 240, 138, 0) 1%, rgba(254, 240, 138, 0.8) 5%, rgba(254, 240, 138, 0.7) 95%, rgba(254, 240, 138, 0.2) 99%);
+    padding: 0 4px;
+    border-radius: 4px;
+}
 
-    .highlight-orange {
-        background: linear-gradient(100deg, rgba(254, 215, 170, 0) 1%, rgba(254, 215, 170, 0.8) 5%, rgba(254, 215, 170, 0.7) 95%, rgba(254, 215, 170, 0.2) 99%);
-        padding: 0 4px;
-        border-radius: 4px;
-    }
+.highlight-green {
+    background: linear-gradient(100deg, rgba(187, 247, 208, 0) 1%, rgba(187, 247, 208, 0.8) 5%, rgba(187, 247, 208, 0.7) 95%, rgba(187, 247, 208, 0.2) 99%);
+    padding: 0 4px;
+    border-radius: 4px;
+}
 
-    /* 紙膠帶點綴 */
-    .paper-tape {
-        background: rgba(234, 222, 190, 0.8);
-        border-left: 3px dashed rgba(92, 85, 74, 0.25);
-        border-right: 3px dashed rgba(92, 85, 74, 0.25);
-        transform: rotate(-2deg);
-    }
+.highlight-orange {
+    background: linear-gradient(100deg, rgba(254, 215, 170, 0) 1%, rgba(254, 215, 170, 0.8) 5%, rgba(254, 215, 170, 0.7) 95%, rgba(254, 215, 170, 0.2) 99%);
+    padding: 0 4px;
+    border-radius: 4px;
+}
 
-    /* 電腦版雙欄排版 */
-    @media (min-width: 1024px) {
-        #app { min-height: calc(100vh - 4rem); }
-        .desktop-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .desktop-three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
-        #leaflet-map { height: 480px !important; }
-    }
+/* 紙膠帶點綴 */
+.paper-tape {
+    background: rgba(234, 222, 190, 0.8);
+    border-left: 3px dashed rgba(92, 85, 74, 0.25);
+    border-right: 3px dashed rgba(92, 85, 74, 0.25);
+    transform: rotate(-2deg);
+}
 
-    /* 復古手繪風地圖 */
-    .leaflet-container {
-        filter: sepia(0.35) hue-rotate(8deg) contrast(0.95) saturate(0.85);
-        border: 2px solid #5c554a !important;
-        border-radius: 20px 8px 15px 8px/8px 15px 8px 20px;
-    }
+/* 電腦版雙欄排版 */
+@media (min-width: 1024px) {
+    #app { min-height: calc(100vh - 4rem); }
+    .desktop-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    .desktop-three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+    #leaflet-map { height: 480px !important; }
+}
+
+/* 復古手繪風地圖 */
+.leaflet-container {
+    filter: sepia(0.35) hue-rotate(8deg) contrast(0.95) saturate(0.85);
+    border: 2px solid #5c554a !important;
+    border-radius: 20px 8px 15px 8px/8px 15px 8px 20px;
+}
+
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 
 </head>
 <body class="min-h-screen flex justify-center items-stretch sm:p-4 lg:p-8">
@@ -233,76 +234,79 @@
         </div>
 
 
-    <!-- 城市一 -->
-    <div class="space-y-2">
-        <div class="flex gap-2 items-center">
-            <div class="flex items-center flex-1 sketch-input px-2 gap-1.5">
-                <span class="text-[10px] font-bold text-[#8c8577]">①</span>
-                <input type="text" v-model="weatherCityInput" @keyup.enter="fetchWeatherByCity(1)"
-                    placeholder="想去哪裡？(如：京都、Kyoto)"
-                    class="flex-1 bg-transparent text-xs py-1.5 focus:outline-none text-[#4a463f] placeholder-[#c4beaf]" />
-            </div>
-            <button @click="fetchWeatherByCity(1)" :disabled="weatherLoading"
-                class="px-3 py-1.5 sketch-btn text-xs font-bold shrink-0">
-                <span v-if="weatherLoading">...</span>
-                <span v-else>記錄</span>
-            </button>
+<!-- 城市一 -->
+<div class="space-y-2">
+    <div class="flex gap-2 items-center">
+        <div class="flex items-center flex-1 sketch-input px-2 gap-1.5">
+            <span class="text-[10px] font-bold text-[#8c8577]">①</span>
+            <input type="text" v-model="weatherCityInput" @keyup.enter="fetchWeatherByCity(1)"
+                placeholder="想去哪裡？(如：京都、Kyoto)"
+                class="flex-1 bg-transparent text-xs py-1.5 focus:outline-none text-[#4a463f] placeholder-[#c4beaf]" />
         </div>
-        <div v-if="weatherError" class="text-[10px] text-red-500 font-bold px-1">{{ weatherError }}</div>
-        <div v-if="weatherData.length">
-            <div class="text-[10px] text-[#8c8577] font-bold flex items-center gap-1 mb-1.5">
-                <i data-lucide="map-pin" class="w-3 h-3"></i><span>{{ weatherCity }}</span>
-            </div>
-            <div class="grid grid-cols-3 gap-2 text-center divide-x-2 divide-dashed divide-[#5c554a]/30">
-                <div v-for="(day, i) in weatherData" :key="'a'+i" class="space-y-1">
-                    <p class="text-[10px] text-[#8c8577] font-bold">{{ day.dayLabel }}</p>
-                    <div class="flex justify-center my-0.5 text-[#5c554a]">
-                        <i :data-lucide="getWeatherIcon(day.condition)" class="w-4 h-4"></i>
-                    </div>
-                    <p class="text-xs font-bold text-[#4a463f]">{{ day.tempRange }}</p>
-                    <p class="text-[9px] text-[#a8a297] font-bold">☂ {{ day.pop }}</p>
-                </div>
-            </div>
-        </div>
+        <button @click="fetchWeatherByCity(1)" :disabled="weatherLoading"
+            class="px-3 py-1.5 sketch-btn text-xs font-bold shrink-0">
+            <span v-if="weatherLoading">...</span>
+            <span v-else>記錄</span>
+        </button>
     </div>
-
-    <div class="sketch-hr"></div>
-
-    <!-- 城市二 -->
-    <div class="space-y-2">
-        <div class="flex gap-2 items-center">
-            <div class="flex items-center flex-1 sketch-input px-2 gap-1.5">
-                <span class="text-[10px] font-bold text-[#8c8577]">②</span>
-                <input type="text" v-model="weatherCityInput2" @keyup.enter="fetchWeatherByCity(2)"
-                    placeholder="下個目的地？(如：東京、Tokyo)"
-                    class="flex-1 bg-transparent text-xs py-1.5 focus:outline-none text-[#4a463f] placeholder-[#c4beaf]" />
-            </div>
-            <button @click="fetchWeatherByCity(2)" :disabled="weatherLoading2"
-                class="px-3 py-1.5 sketch-btn text-xs font-bold shrink-0">
-                <span v-if="weatherLoading2">...</span>
-                <span v-else>記錄</span>
-            </button>
+    <div v-if="weatherError" class="text-[10px] text-red-500 font-bold px-1">{{ weatherError }}</div>
+    <div v-if="weatherData.length">
+        <div class="text-[10px] text-[#8c8577] font-bold flex items-center gap-1 mb-1.5">
+            <i data-lucide="map-pin" class="w-3 h-3"></i><span>{{ weatherCity }}</span>
         </div>
-        <div v-if="weatherError2" class="text-[10px] text-red-500 font-bold px-1">{{ weatherError2 }}</div>
-        <div v-if="weatherData2.length">
-            <div class="text-[10px] text-[#8c8577] font-bold flex items-center gap-1 mb-1.5">
-                <i data-lucide="map-pin" class="w-3 h-3"></i><span>{{ weatherCity2 }}</span>
-            </div>
-            <div class="grid grid-cols-3 gap-2 text-center divide-x-2 divide-dashed divide-[#5c554a]/30">
-                <div v-for="(day, i) in weatherData2" :key="'b'+i" class="space-y-1">
-                    <p class="text-[10px] text-[#8c8577] font-bold">{{ day.dayLabel }}</p>
-                    <div class="flex justify-center my-0.5 text-[#5c554a]">
-                        <i :data-lucide="getWeatherIcon(day.condition)" class="w-4 h-4"></i>
-                    </div>
-                    <p class="text-xs font-bold text-[#4a463f]">{{ day.tempRange }}</p>
-                    <p class="text-[9px] text-[#a8a297] font-bold">☂ {{ day.pop }}</p>
+        <div class="grid grid-cols-3 gap-2 text-center divide-x-2 divide-dashed divide-[#5c554a]/30">
+            <div v-for="(day, i) in weatherData" :key="'a'+i" class="space-y-1">
+                <p class="text-[10px] text-[#8c8577] font-bold">{{ day.dayLabel }}</p>
+                <div class="flex justify-center my-0.5 text-[#5c554a]">
+                    <i :data-lucide="getWeatherIcon(day.condition)" class="w-4 h-4"></i>
                 </div>
+                <p class="text-xs font-bold text-[#4a463f]">{{ day.tempRange }}</p>
+                <p class="text-[9px] text-[#a8a297] font-bold">☂ {{ day.pop }}</p>
             </div>
         </div>
     </div>
 </div>
 
+<div class="sketch-hr"></div>
+
+<!-- 城市二 -->
+<div class="space-y-2">
+    <div class="flex gap-2 items-center">
+        <div class="flex items-center flex-1 sketch-input px-2 gap-1.5">
+            <span class="text-[10px] font-bold text-[#8c8577]">②</span>
+            <input type="text" v-model="weatherCityInput2" @keyup.enter="fetchWeatherByCity(2)"
+                placeholder="下個目的地？(如：東京、Tokyo)"
+                class="flex-1 bg-transparent text-xs py-1.5 focus:outline-none text-[#4a463f] placeholder-[#c4beaf]" />
+        </div>
+        <button @click="fetchWeatherByCity(2)" :disabled="weatherLoading2"
+            class="px-3 py-1.5 sketch-btn text-xs font-bold shrink-0">
+            <span v-if="weatherLoading2">...</span>
+            <span v-else>記錄</span>
+        </button>
+    </div>
+    <div v-if="weatherError2" class="text-[10px] text-red-500 font-bold px-1">{{ weatherError2 }}</div>
+    <div v-if="weatherData2.length">
+        <div class="text-[10px] text-[#8c8577] font-bold flex items-center gap-1 mb-1.5">
+            <i data-lucide="map-pin" class="w-3 h-3"></i><span>{{ weatherCity2 }}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center divide-x-2 divide-dashed divide-[#5c554a]/30">
+            <div v-for="(day, i) in weatherData2" :key="'b'+i" class="space-y-1">
+                <p class="text-[10px] text-[#8c8577] font-bold">{{ day.dayLabel }}</p>
+                <div class="flex justify-center my-0.5 text-[#5c554a]">
+                    <i :data-lucide="getWeatherIcon(day.condition)" class="w-4 h-4"></i>
+                </div>
+                <p class="text-xs font-bold text-[#4a463f]">{{ day.tempRange }}</p>
+                <p class="text-[9px] text-[#a8a297] font-bold">☂ {{ day.pop }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</div>
+
 <!-- 多幣別匯率換算 -->
+
 <div class="sketch-card p-5 space-y-4 relative">
     <div class="absolute -top-2 right-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]">EXCHANGE</div>
     <div class="flex justify-between items-center text-[11px] text-[#8c8577] font-bold uppercase border-b-2 border-dashed border-[#5c554a]/30 pb-1.5">
@@ -313,41 +317,46 @@
         </button>
     </div>
 
-    <div class="flex gap-2 items-center">
-        <select v-model="fxFromCurrency" class="sketch-input px-2 py-1.5 text-xs focus:outline-none text-[#4a463f] font-bold shrink-0">
-            <option v-for="c in fxCurrencies" :key="c.code" :value="c.code">{{ c.flag }} {{ c.code }}</option>
-        </select>
-        <input type="number" v-model="fxAmount" placeholder="輸入要折算的金幣"
-            class="flex-1 sketch-input px-3 py-1.5 text-sm focus:outline-none text-[#4a463f] placeholder-[#c4beaf]" />
-    </div>
 
-    <div v-if="fxError" class="text-[10px] text-red-500 font-bold px-1">{{ fxError }}</div>
-    <div v-if="fxRates && fxAmount > 0" class="space-y-2">
-        <div v-for="c in fxCurrencies" :key="c.code" v-show="c.code !== fxFromCurrency"
-            class="flex justify-between items-center bg-[#fcfbf7] rounded-xl px-3 py-2 border border-[#5c554a]/30">
-            <div class="flex items-center gap-2">
-                <span class="text-base">{{ c.flag }}</span>
-                <div>
-                    <p class="text-xs font-bold text-[#4a463f]">{{ c.name }}</p>
-                    <p class="text-[9px] text-[#a8a297] font-bold">1 {{ fxFromCurrency }} = {{ fxConvertRate(fxFromCurrency, c.code) }} {{ c.code }}</p>
-                </div>
+<div class="flex gap-2 items-center">
+    <select v-model="fxFromCurrency" class="sketch-input px-2 py-1.5 text-xs focus:outline-none text-[#4a463f] font-bold shrink-0">
+        <option v-for="c in fxCurrencies" :key="c.code" :value="c.code">{{ c.flag }} {{ c.code }}</option>
+    </select>
+    <input type="number" v-model="fxAmount" placeholder="輸入要折算的金幣"
+        class="flex-1 sketch-input px-3 py-1.5 text-sm focus:outline-none text-[#4a463f] placeholder-[#c4beaf]" />
+</div>
+
+<div v-if="fxError" class="text-[10px] text-red-500 font-bold px-1">{{ fxError }}</div>
+<div v-if="fxRates && fxAmount > 0" class="space-y-2">
+    <div v-for="c in fxCurrencies" :key="c.code" v-show="c.code !== fxFromCurrency"
+        class="flex justify-between items-center bg-[#fcfbf7] rounded-xl px-3 py-2 border border-[#5c554a]/30">
+        <div class="flex items-center gap-2">
+            <span class="text-base">{{ c.flag }}</span>
+            <div>
+                <p class="text-xs font-bold text-[#4a463f]">{{ c.name }}</p>
+                <p class="text-[9px] text-[#a8a297] font-bold">1 {{ fxFromCurrency }} = {{ fxConvertRate(fxFromCurrency, c.code) }} {{ c.code }}</p>
             </div>
-            <span class="text-sm font-bold text-[#4a463f] highlight-yellow">≈ {{ fxConvert(fxFromCurrency, c.code, fxAmount) }}</span>
         </div>
+        <span class="text-sm font-bold text-[#4a463f] highlight-yellow">≈ {{ fxConvert(fxFromCurrency, c.code, fxAmount) }}</span>
     </div>
-    <div v-else-if="!fxRates && !fxLoading" class="text-center py-2">
-        <button @click="fetchExchangeRates()" class="text-[11px] text-[#8c8577] underline underline-offset-2 font-bold">點此同步最新的即時匯率</button>
-    </div>
-    <div v-if="fxLoading" class="text-center py-2 text-[11px] text-[#a8a297] animate-pulse font-bold">正在翻閱手寫匯率簿中...</div>
+</div>
+<div v-else-if="!fxRates && !fxLoading" class="text-center py-2">
+    <button @click="fetchExchangeRates()" class="text-[11px] text-[#8c8577] underline underline-offset-2 font-bold">點此同步最新的即時匯率</button>
+</div>
+<div v-if="fxLoading" class="text-center py-2 text-[11px] text-[#a8a297] animate-pulse font-bold">正在翻閱手寫匯率簿中...</div>
+
+
 </div>
 
 <!-- 今日支出統計 -->
+
 <div class="text-center py-2">
     <p class="text-xs text-[#8c8577] font-bold tracking-wider mb-1">✍️ TODAY'S JOURNAL SPENT</p>
     <p class="text-4xl font-bold tracking-tight text-[#3d3a34]">NT$ {{ formatNumber(todayTotal) }}</p>
 </div>
 
 <!-- 預算水彩色鉛筆監控 -->
+
 <div class="sketch-card p-5 space-y-4 relative">
     <div class="absolute -top-2 right-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]">BUDGETS</div>
     <div class="flex justify-between items-center border-b-2 border-dashed border-[#5c554a]/30 pb-2">
@@ -373,26 +382,28 @@
             </div>
         </div>
     </div>
-    
-    <!-- 手寫合計欄 -->
-    <div class="border-t-2 border-dashed border-[#5c554a] pt-3 space-y-1.5 font-bold text-xs text-[#4a463f]">
-        <div class="flex justify-between">
-            <span>總體預算額度</span>
-            <span>NT$ {{ formatNumber(totalBudget) }}</span>
-        </div>
-        <div class="flex justify-between">
-            <span>累計已記開銷</span>
-            <span>NT$ {{ formatNumber(totalSpent) }}</span>
-        </div>
-        <div class="flex justify-between text-sm border-t border-[#5c554a]/20 pt-1">
-            <span>總賸餘款</span>
-            <span :class="totalBudget - totalSpent >= 0 ? 'highlight-green' : 'highlight-orange'">
-                NT$ {{ formatNumber(totalBudget - totalSpent) }}
-            </span>
-        </div>
+
+
+<!-- 手寫合計欄 -->
+<div class="border-t-2 border-dashed border-[#5c554a] pt-3 space-y-1.5 font-bold text-xs text-[#4a463f]">
+    <div class="flex justify-between">
+        <span>總體預算額度</span>
+        <span>NT$ {{ formatNumber(totalBudget) }}</span>
+    </div>
+    <div class="flex justify-between">
+        <span>累計已記開銷</span>
+        <span>NT$ {{ formatNumber(totalSpent) }}</span>
+    </div>
+    <div class="flex justify-between text-sm border-t border-[#5c554a]/20 pt-1">
+        <span>總賸餘款</span>
+        <span :class="totalBudget - totalSpent >= 0 ? 'highlight-green' : 'highlight-orange'">
+            NT$ {{ formatNumber(totalBudget - totalSpent) }}
+        </span>
     </div>
 </div>
 
+
+</div>
 
 </div>
 
@@ -419,8 +430,8 @@
         </div>
     </div>
 
-
 <!-- 拍照按鈕 -->
+
 <div class="grid grid-cols-2 gap-3">
     <label class="flex items-center justify-center gap-2 py-2.5 sketch-btn text-xs font-bold cursor-pointer hover:bg-[#eae5da] transition-all">
         <i data-lucide="camera" class="w-4 h-4"></i> 開啟快門
@@ -433,51 +444,54 @@
 </div>
 
 <!-- 手寫對照表單 -->
+
 <div class="sketch-card p-5 space-y-4">
     <p class="text-xs font-bold text-[#8c8577] uppercase border-b-2 border-dashed border-[#5c554a]/30 pb-1.5">✍️ 照著收據謄寫上來</p>
 
-    <div>
-        <label class="text-[10px] text-[#a8a297] font-bold block mb-1">金額</label>
-        <input type="number" v-model="scanForm.amount" placeholder="0"
-            class="w-full bg-transparent text-3xl font-bold border-b-2 border-[#5c554a] py-1 focus:outline-none text-[#3d3a34]" />
-    </div>
 
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-            <label class="text-[10px] text-[#a8a297] font-bold block mb-1">品項名稱</label>
-            <input type="text" v-model="scanForm.title" placeholder="例：美味可樂餅"
-                class="w-full sketch-input p-2 text-sm focus:outline-none" />
-        </div>
-        <div>
-            <label class="text-[10px] text-[#a8a297] font-bold block mb-1">消費日期</label>
-            <input type="date" v-model="scanForm.date"
-                class="w-full sketch-input p-2 text-sm focus:outline-none" />
-        </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-            <label class="text-[10px] text-[#a8a297] font-bold block mb-1">手帳分類</label>
-            <select v-model="scanForm.category"
-                class="w-full sketch-input p-2 text-xs font-bold focus:outline-none">
-                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-            </select>
-        </div>
-        <div>
-            <label class="text-[10px] text-[#a8a297] font-bold block mb-1">支付工具</label>
-            <select v-model="scanForm.payMethod"
-                class="w-full sketch-input p-2 text-xs font-bold focus:outline-none">
-                <option v-for="method in payMethods" :key="method" :value="method">{{ method }}</option>
-            </select>
-        </div>
-    </div>
-
-    <button @click="submitScanExpense"
-        class="w-full py-3 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da] transition-all">
-        ✎ 寫入今日帳目
-    </button>
+<div>
+    <label class="text-[10px] text-[#a8a297] font-bold block mb-1">金額</label>
+    <input type="number" v-model="scanForm.amount" placeholder="0"
+        class="w-full bg-transparent text-3xl font-bold border-b-2 border-[#5c554a] py-1 focus:outline-none text-[#3d3a34]" />
 </div>
 
+<div class="grid grid-cols-2 gap-3">
+    <div>
+        <label class="text-[10px] text-[#a8a297] font-bold block mb-1">品項名稱</label>
+        <input type="text" v-model="scanForm.title" placeholder="例：美味可樂餅"
+            class="w-full sketch-input p-2 text-sm focus:outline-none" />
+    </div>
+    <div>
+        <label class="text-[10px] text-[#a8a297] font-bold block mb-1">消費日期</label>
+        <input type="date" v-model="scanForm.date"
+            class="w-full sketch-input p-2 text-sm focus:outline-none" />
+    </div>
+</div>
+
+<div class="grid grid-cols-2 gap-3">
+    <div>
+        <label class="text-[10px] text-[#a8a297] font-bold block mb-1">手帳分類</label>
+        <select v-model="scanForm.category"
+            class="w-full sketch-input p-2 text-xs font-bold focus:outline-none">
+            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+        </select>
+    </div>
+    <div>
+        <label class="text-[10px] text-[#a8a297] font-bold block mb-1">支付工具</label>
+        <select v-model="scanForm.payMethod"
+            class="w-full sketch-input p-2 text-xs font-bold focus:outline-none">
+            <option v-for="method in payMethods" :key="method" :value="method">{{ method }}</option>
+        </select>
+    </div>
+</div>
+
+<button @click="submitScanExpense"
+    class="w-full py-3 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da] transition-all">
+    ✎ 寫入今日帳目
+</button>
+
+
+</div>
 
 </div>
 
@@ -489,14 +503,15 @@
         <p class="text-3xl font-bold">NT$ {{ formatNumber(grandTotalExpenses) }}</p>
     </div>
 
-
 <!-- 檢視切換 -->
+
 <div class="flex gap-2 p-1 sketch-input text-xs font-bold">
     <button @click="recordsViewMode = 'date'" :class="{'highlight-yellow text-[#4a463f]': recordsViewMode === 'date'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">按日期排序</button>
     <button @click="recordsViewMode = 'category'" :class="{'highlight-yellow text-[#4a463f]': recordsViewMode === 'category'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">按分類檢視</button>
 </div>
 
 <!-- 日期模式 -->
+
 <div v-if="recordsViewMode === 'date'" class="space-y-4">
     <div v-for="(group, date) in groupedExpensesByDate" :key="date" class="space-y-2">
         <div class="flex justify-between items-center border-b border-[#5c554a]/30 pb-1 font-bold text-xs">
@@ -522,6 +537,7 @@
 </div>
 
 <!-- 分類模式 -->
+
 <div v-if="recordsViewMode === 'category'" class="space-y-4">
     <div v-for="(group, category) in groupedExpensesByCategory" :key="category" class="space-y-2">
         <div class="flex justify-between items-center border-b border-[#5c554a]/30 pb-1 font-bold text-xs">
@@ -547,10 +563,10 @@
 </div>
 
 <!-- 乾淨空白預設提示 -->
+
 <div v-if="expenses.length === 0" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
     ✎ 目前尚無任何記帳數據，點選右上角「+」記錄您的第一筆旅居開銷吧！
 </div>
-
 
 </div>
 
@@ -582,8 +598,8 @@
         </button>
     </div>
 
-
 <!-- 天數選擇滑動條 -->
+
 <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2 border-b-2 border-dashed border-[#5c554a]/30">
     <button v-for="day in 26" :key="day" 
             @click="selectedDay = day"
@@ -598,7 +614,22 @@
     <span>共 {{ filteredItineraries.length }} 處漫遊節點</span>
 </div>
 
-<!-- 節點清單 -->
+<!-- 每日重點輸入框 -->
+
+<div class="sketch-card p-4 space-y-2 relative">
+    <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">DAY HIGHLIGHT</div>
+    <div class="flex items-center gap-2 pt-1">
+        <span class="text-base select-none shrink-0">✨</span>
+        <label class="text-[11px] font-bold text-[#8c8577] uppercase tracking-widest shrink-0">今日重點</label>
+    </div>
+    <textarea
+        :value="getDayHighlight(selectedDay)"
+        @input="setDayHighlight(selectedDay, $event.target.value)"
+        placeholder="記下今日的期待或重點備忘，例如：重點逛弘大周邊市集，晚上找燒肉！"
+        rows="2"
+        class="w-full sketch-input px-3 py-2 text-xs text-[#4a463f] placeholder-[#c4beaf] focus:outline-none resize-none leading-relaxed"
+    ></textarea>
+</div>
 <div class="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
     <div v-for="item in filteredItineraries" :key="item.id" class="sketch-card p-5 space-y-3 relative">
         <div class="flex justify-between items-start">
@@ -627,38 +658,40 @@
             </div>
         </div>
 
-        <div>
-            <h4 class="text-base font-bold text-[#4a463f] flex items-center gap-1.5">
-                {{ item.title }}
-                <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank" class="text-blue-500/80 hover:text-blue-700 transition-colors inline-block">
-                    <i data-lucide="map" class="w-3.5 h-3.5"></i>
-                </a>
-            </h4>
-            <p v-if="item.note" class="text-xs text-[#a8a297] font-bold mt-1 bg-[#fffefd] p-2 rounded-lg whitespace-pre-line border border-[#5c554a]/20">{{ item.note }}</p>
-        </div>
 
-        <div v-if="item.transport" class="text-xs text-[#736c60] bg-[#fdfcf9] p-2 rounded-xl flex items-start gap-1.5 border border-[#5c554a]/20 font-bold">
-            <i data-lucide="train" class="w-3.5 h-3.5 mt-0.5 text-[#a8a297] shrink-0"></i>
-            <span class="whitespace-pre-line">{{ item.transport }}</span>
-        </div>
-
-        <!-- 加入手繪地圖 -->
-        <button @click="toggleMapPin(item)"
-            class="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold border transition-all"
-            :class="isMapPinned(item.id)
-                ? 'highlight-green border-[#5c554a] text-[#5c554a]'
-                : 'bg-[#fffdf9] border-[#5c554a]/30 text-[#a8a297] hover:text-[#5c554a]'">
-            <i :data-lucide="isMapPinned(item.id) ? 'map-pin' : 'map-pin-off'" class="w-3.5 h-3.5"></i>
-            {{ isMapPinned(item.id) ? '📌 已標在手繪地圖上 ✓' : '📍 標記到手繪地圖' }}
-        </button>
+    <div>
+        <h4 class="text-base font-bold text-[#4a463f] flex items-center gap-1.5">
+            {{ item.title }}
+            <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank" class="text-blue-500/80 hover:text-blue-700 transition-colors inline-block">
+                <i data-lucide="map" class="w-3.5 h-3.5"></i>
+            </a>
+        </h4>
+        <p v-if="item.note" class="text-xs text-[#a8a297] font-bold mt-1 bg-[#fffefd] p-2 rounded-lg whitespace-pre-line border border-[#5c554a]/20">{{ item.note }}</p>
     </div>
 
-    <!-- 乾淨空白預設提示 -->
-    <div v-if="filteredItineraries.length === 0" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
-        🍃 今日留白，未排定核心行程。<br><span class="text-[10px] opacity-70 font-normal">點按右上角「+」或匯入 Excel 自由塗鴉吧！</span>
+    <div v-if="item.transport" class="text-xs text-[#736c60] bg-[#fdfcf9] p-2 rounded-xl flex items-start gap-1.5 border border-[#5c554a]/20 font-bold">
+        <i data-lucide="train" class="w-3.5 h-3.5 mt-0.5 text-[#a8a297] shrink-0"></i>
+        <span class="whitespace-pre-line">{{ item.transport }}</span>
     </div>
+
+    <!-- 加入手繪地圖 -->
+    <button @click="toggleMapPin(item)"
+        class="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold border transition-all"
+        :class="isMapPinned(item.id)
+            ? 'highlight-green border-[#5c554a] text-[#5c554a]'
+            : 'bg-[#fffdf9] border-[#5c554a]/30 text-[#a8a297] hover:text-[#5c554a]'">
+        <i :data-lucide="isMapPinned(item.id) ? 'map-pin' : 'map-pin-off'" class="w-3.5 h-3.5"></i>
+        {{ isMapPinned(item.id) ? '📌 已標在手繪地圖上 ✓' : '📍 標記到手繪地圖' }}
+    </button>
 </div>
 
+<!-- 乾淨空白預設提示 -->
+<div v-if="filteredItineraries.length === 0" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
+    🍃 今日留白，未排定核心行程。<br><span class="text-[10px] opacity-70 font-normal">點按右上角「+」或匯入 Excel 自由塗鴉吧！</span>
+</div>
+
+
+</div>
 
 </div>
 
@@ -685,8 +718,8 @@
         </div>
     </div>
 
-
 <!-- 一般文字卡片 (實用日語、緊急應對) -->
+
 <div v-if="!['checklist','flight','hotel','ticket','backup'].includes(resourceTab)" class="space-y-3">
     <div v-for="res in filteredResources" :key="res.id" class="sketch-card p-4 flex justify-between items-start">
         <div class="space-y-1 flex-1 pr-4">
@@ -708,40 +741,45 @@
 </div>
 
 <!-- 行前準備 (Checklist) -->
+
 <div v-if="resourceTab === 'checklist'" class="space-y-2.5">
     <div v-for="(item, idx) in checklist" :key="item.id" 
          class="sketch-card p-3.5 flex justify-between items-center transition-all"
          :class="{'opacity-50 bg-[#f4f1ea]/40': item.checked}">
-        
-        <div class="flex items-center space-x-3 flex-1 min-w-0 pr-2">
-            <button @click="toggleChecklistItem(item)" class="w-5 h-5 rounded border border-[#5c554a] flex items-center justify-center shrink-0 transition-colors"
-                    :class="item.checked ? 'bg-[#5c554a] text-white' : 'bg-transparent'">
-                <i v-if="item.checked" data-lucide="check" class="w-3.5 h-3.5"></i>
-            </button>
-            <div class="min-w-0 flex-1 font-bold">
-                <p class="text-sm text-[#4a463f] transition-all" :class="{'line-through text-[#a8a297]': item.checked}">
-                    {{ item.title }}
-                </p>
-                <p v-if="item.note" class="text-[10px] text-[#a8a297] truncate mt-0.5">{{ item.note }}</p>
-            </div>
-        </div>
 
-        <div class="flex items-center space-x-2.5 shrink-0">
-            <button @click="openEditChecklistModal(item, idx)" class="text-[#a8a297] hover:text-[#5c554a] transition-colors">
-                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-            </button>
-            <button @click="deleteChecklistItem(idx)" class="text-[#a8a297] hover:text-red-500 transition-colors">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-            </button>
+
+    <div class="flex items-center space-x-3 flex-1 min-w-0 pr-2">
+        <button @click="toggleChecklistItem(item)" class="w-5 h-5 rounded border border-[#5c554a] flex items-center justify-center shrink-0 transition-colors"
+                :class="item.checked ? 'bg-[#5c554a] text-white' : 'bg-transparent'">
+            <i v-if="item.checked" data-lucide="check" class="w-3.5 h-3.5"></i>
+        </button>
+        <div class="min-w-0 flex-1 font-bold">
+            <p class="text-sm text-[#4a463f] transition-all" :class="{'line-through text-[#a8a297]': item.checked}">
+                {{ item.title }}
+            </p>
+            <p v-if="item.note" class="text-[10px] text-[#a8a297] truncate mt-0.5">{{ item.note }}</p>
         </div>
     </div>
 
-    <div v-if="checklist.length === 0" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
-        ☑ 所有行前清單皆已清空，點按右上角來列張裝備明細。
+    <div class="flex items-center space-x-2.5 shrink-0">
+        <button @click="openEditChecklistModal(item, idx)" class="text-[#a8a297] hover:text-[#5c554a] transition-colors">
+            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+        </button>
+        <button @click="deleteChecklistItem(idx)" class="text-[#a8a297] hover:text-red-500 transition-colors">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        </button>
     </div>
 </div>
 
+<div v-if="checklist.length === 0" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
+    ☑ 所有行前清單皆已清空，點按右上角來列張裝備明細。
+</div>
+
+
+</div>
+
 <!-- 機票預定 -->
+
 <div v-if="resourceTab === 'flight'" class="space-y-3">
     <div v-if="!bookings.filter(b=>b.type==='flight').length" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">✈ 尚未新增任何航班預定。</div>
     <div v-for="b in bookings.filter(b=>b.type==='flight')" :key="b.id" class="sketch-card p-4 space-y-3">
@@ -779,6 +817,7 @@
 </div>
 
 <!-- 住宿登記 -->
+
 <div v-if="resourceTab === 'hotel'" class="space-y-3">
     <div v-if="!bookings.filter(b=>b.type==='hotel').length" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">🏨 尚未新增任何旅宿登記。</div>
     <div v-for="b in bookings.filter(b=>b.type==='hotel')" :key="b.id" class="sketch-card overflow-hidden">
@@ -815,6 +854,7 @@
 </div>
 
 <!-- 票券預定 -->
+
 <div v-if="resourceTab === 'ticket'" class="space-y-3">
     <div v-if="!bookings.filter(b=>b.type==='ticket').length" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">🎫 尚未登記任何票券行程。</div>
     <div v-for="b in bookings.filter(b=>b.type==='ticket')" :key="b.id" class="sketch-card p-4 space-y-3">
@@ -850,6 +890,7 @@
 </div>
 
 <!-- 備案行程 -->
+
 <div v-if="resourceTab === 'backup'" class="space-y-4">
     <div v-for="(label, idx) in backupDayLabels" :key="'bk'+idx" class="space-y-2">
         <!-- 標題 -->
@@ -876,48 +917,50 @@
                 <i v-if="isBackupExpanded(idx)" data-lucide="chevron-up" class="w-3.5 h-3.5 text-[#a8a297]"></i>
             </div>
         </div>
-        
-        <div v-if="isBackupExpanded(idx) && backupItinerariesByDay(27 + idx).length" class="space-y-2">
-            <div v-for="item in backupItinerariesByDay(27 + idx)" :key="item.id"
-                class="sketch-card p-3.5 space-y-2">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-mono bg-[#fcfaf4] border border-[#5c554a]/30 text-[#5c554a] px-2 py-0.5 rounded-md font-bold">{{ item.time }}</span>
-                    <span v-if="item.type" class="text-[10px] border border-[#5c554a]/30 text-[#8c8577] px-1.5 py-0.5 rounded-md uppercase font-bold">{{ item.type }}</span>
-                    <div class="flex items-center gap-1.5 ml-auto">
-                        <button @click="openEditItineraryModal(item)" class="text-[#a8a297] hover:text-[#5c554a] transition-colors">
-                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <button @click="deleteItinerary(item.id)" class="text-[#a8a297] hover:text-red-500 transition-colors">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        </button>
-                    </div>
+
+
+    <div v-if="isBackupExpanded(idx) && backupItinerariesByDay(27 + idx).length" class="space-y-2">
+        <div v-for="item in backupItinerariesByDay(27 + idx)" :key="item.id"
+            class="sketch-card p-3.5 space-y-2">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-mono bg-[#fcfaf4] border border-[#5c554a]/30 text-[#5c554a] px-2 py-0.5 rounded-md font-bold">{{ item.time }}</span>
+                <span v-if="item.type" class="text-[10px] border border-[#5c554a]/30 text-[#8c8577] px-1.5 py-0.5 rounded-md uppercase font-bold">{{ item.type }}</span>
+                <div class="flex items-center gap-1.5 ml-auto">
+                    <button @click="openEditItineraryModal(item)" class="text-[#a8a297] hover:text-[#5c554a] transition-colors">
+                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button @click="deleteItinerary(item.id)" class="text-[#a8a297] hover:text-red-500 transition-colors">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
                 </div>
-                <div>
-                    <h4 class="text-sm font-bold text-[#4a463f] flex items-center gap-1.5">
-                        {{ item.title }}
-                        <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank" class="text-blue-500/80 hover:text-blue-700 inline-block">
-                            <i data-lucide="map" class="w-3.5 h-3.5"></i>
-                        </a>
-                    </h4>
-                    <p v-if="item.note" class="text-xs text-[#a8a297] font-bold mt-1 bg-[#fff] p-2 rounded-lg border border-[#5c554a]/20">{{ item.note }}</p>
-                </div>
-                <!-- 加入行程 -->
-                <button @click="openAddToSchedule(item)"
-                    class="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold bg-[#eae5da]/40 hover:bg-[#eae5da] text-[#5c554a] border border-[#5c554a] transition-all">
-                    <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
-                    將備案寫入正式行程
-                </button>
             </div>
-        </div>
-        <div v-if="isBackupExpanded(idx) && !backupItinerariesByDay(27 + idx).length" class="text-center py-4 text-[10px] text-[#a8a297] italic font-bold">
-            🍂 此備案手帳內目前沒有任何想法。
+            <div>
+                <h4 class="text-sm font-bold text-[#4a463f] flex items-center gap-1.5">
+                    {{ item.title }}
+                    <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank" class="text-blue-500/80 hover:text-blue-700 inline-block">
+                        <i data-lucide="map" class="w-3.5 h-3.5"></i>
+                    </a>
+                </h4>
+                <p v-if="item.note" class="text-xs text-[#a8a297] font-bold mt-1 bg-[#fff] p-2 rounded-lg border border-[#5c554a]/20">{{ item.note }}</p>
+            </div>
+            <!-- 加入行程 -->
+            <button @click="openAddToSchedule(item)"
+                class="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold bg-[#eae5da]/40 hover:bg-[#eae5da] text-[#5c554a] border border-[#5c554a] transition-all">
+                <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
+                將備案寫入正式行程
+            </button>
         </div>
     </div>
-    <div v-if="!backupDayLabels.length" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
-        📓 尚未設定備案行程。
+    <div v-if="isBackupExpanded(idx) && !backupItinerariesByDay(27 + idx).length" class="text-center py-4 text-[10px] text-[#a8a297] italic font-bold">
+        🍂 此備案手帳內目前沒有任何想法。
     </div>
 </div>
+<div v-if="!backupDayLabels.length" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
+    📓 尚未設定備案行程。
+</div>
 
+
+</div>
 
 </div>
 
@@ -938,8 +981,8 @@
         </div>
     </div>
 
-
 <!-- 支出類別 + 支付方式：電腦版並排 -->
+
 <div class="desktop-two-col">
 <!-- 支出類別 -->
 <div class="sketch-card p-5 space-y-3">
@@ -964,6 +1007,7 @@
 </div>
 
 <!-- 支付方式 -->
+
 <div class="sketch-card p-5 space-y-3">
     <h3 class="text-xs uppercase tracking-wider text-[#4a463f] font-bold border-b-2 border-dashed border-[#5c554a]/30 pb-2 flex items-center justify-between">
         <span>💳 支付載具管理</span>
@@ -987,6 +1031,7 @@
 </div><!-- end desktop-two-col -->
 
 <!-- 預算感知控制 -->
+
 <div class="sketch-card p-5 space-y-4">
     <h3 class="text-xs uppercase tracking-wider text-[#4a463f] font-bold border-b-2 border-dashed border-[#5c554a]/30 pb-2">🎯 設定理財手帳各類別上限</h3>
     <div class="space-y-3 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:space-y-0 max-h-64 lg:max-h-none overflow-y-auto no-scrollbar">
@@ -1004,7 +1049,6 @@
     </div>
 </div>
 
-
 </div>
 
 <!-- 地圖 TAB -->
@@ -1021,7 +1065,6 @@
         </button>
     </div>
 
-
 <div v-if="mapPinnedItems.length > 0" class="space-y-3">
     <div class="flex items-center justify-between px-1 font-bold text-xs">
         <span class="text-[#8c8577]">手繪地圖已釘選 <span class="highlight-yellow">{{ mapPinnedItems.length }}</span> 處景點</span>
@@ -1035,46 +1078,48 @@
         </div>
     </div>
 
-    <!-- Leaflet 地圖容器 -->
-    <div class="rounded-2xl overflow-hidden shadow-sm relative">
-        <div id="leaflet-map" style="height:320px;width:100%;"></div>
-        <div v-if="mapGeocoding" class="absolute inset-0 bg-[#fffdf9]/90 flex items-center justify-center rounded-2xl z-[1000]">
-            <span class="text-xs font-bold text-[#8c8577] animate-pulse flex items-center gap-2">
-                <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>翻閱地理繪卷中...
-            </span>
-        </div>
-    </div>
 
-    <!-- 景點手寫明細 -->
-    <div class="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-        <div v-for="(item, idx) in mapPinnedItems" :key="item.id"
-            class="sketch-card p-3 flex items-start gap-2">
-            <span class="text-[10px] font-bold text-[#faf8f5] bg-[#5c554a] w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">{{ idx + 1 }}</span>
-            <div class="flex-1 min-w-0">
-                <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
-                <div class="flex items-center gap-2 mt-0.5 flex-wrap font-bold">
-                    <span class="text-[10px] text-[#a8a297]">第 {{ item.day }} 天</span>
-                    <span v-if="item.type" class="text-[9px] border border-[#5c554a]/30 text-[#8c8577] px-1 rounded uppercase">{{ item.type }}</span>
-                    <span class="text-[10px] font-mono text-[#a8a297]">⏱ {{ item.time }}</span>
-                    <span v-if="mapCoords[item.id]" class="text-[9px] text-green-600 flex items-center gap-0.5">
-                        ✓ 已定位
-                    </span>
-                    <span v-else-if="mapGeoFailed[item.id]" class="text-[9px] text-red-400">無法定位</span>
-                </div>
+<!-- Leaflet 地圖容器 -->
+<div class="rounded-2xl overflow-hidden shadow-sm relative">
+    <div id="leaflet-map" style="height:320px;width:100%;"></div>
+    <div v-if="mapGeocoding" class="absolute inset-0 bg-[#fffdf9]/90 flex items-center justify-center rounded-2xl z-[1000]">
+        <span class="text-xs font-bold text-[#8c8577] animate-pulse flex items-center gap-2">
+            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>翻閱地理繪卷中...
+        </span>
+    </div>
+</div>
+
+<!-- 景點手寫明細 -->
+<div class="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+    <div v-for="(item, idx) in mapPinnedItems" :key="item.id"
+        class="sketch-card p-3 flex items-start gap-2">
+        <span class="text-[10px] font-bold text-[#faf8f5] bg-[#5c554a] w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">{{ idx + 1 }}</span>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
+            <div class="flex items-center gap-2 mt-0.5 flex-wrap font-bold">
+                <span class="text-[10px] text-[#a8a297]">第 {{ item.day }} 天</span>
+                <span v-if="item.type" class="text-[9px] border border-[#5c554a]/30 text-[#8c8577] px-1 rounded uppercase">{{ item.type }}</span>
+                <span class="text-[10px] font-mono text-[#a8a297]">⏱ {{ item.time }}</span>
+                <span v-if="mapCoords[item.id]" class="text-[9px] text-green-600 flex items-center gap-0.5">
+                    ✓ 已定位
+                </span>
+                <span v-else-if="mapGeoFailed[item.id]" class="text-[9px] text-red-400">無法定位</span>
             </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-                <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank"
-                    class="text-blue-500 hover:text-blue-700 transition-colors">
-                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                </a>
-                <button @click="toggleMapPin(item)" class="text-[#c4beaf] hover:text-red-500 transition-colors">
-                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                </button>
-            </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+            <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank"
+                class="text-blue-500 hover:text-blue-700 transition-colors">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+            </a>
+            <button @click="toggleMapPin(item)" class="text-[#c4beaf] hover:text-red-500 transition-colors">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
         </div>
     </div>
 </div>
 
+
+</div>
 
 </div>
 
@@ -1241,6 +1286,7 @@
             <p class="font-bold text-[#4a463f]">📋 檔案：{{ excelImportModal.filename }}</p>
             <p>解析到 <span class="highlight-yellow text-[#5c554a]">{{ excelImportModal.rows.length }}</span> 筆行程節點</p>
             <p>涵蓋第 {{ excelImportModal.dayRange }} 天</p>
+            <p v-if="excelImportModal.highlightCount > 0">✨ 含 <span class="highlight-green text-[#5c554a]">{{ excelImportModal.highlightCount }}</span> 筆每日重點</p>
         </div>
         <div class="space-y-2">
             <p class="text-[11px] text-[#a8a297] tracking-wider uppercase font-bold">匯入方式選擇</p>
@@ -1276,96 +1322,97 @@
         </div>
 
 
-    <div>
-        <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">
-            {{ bookingForm.type === 'flight' ? '航空公司 / 航線名稱' : bookingForm.type === 'hotel' ? '住宿地點/飯店名稱' : '票券或體驗名稱' }}
-        </label>
-        <input type="text" v-model="bookingForm.title" class="w-full sketch-input p-2 text-sm focus:outline-none" />
-    </div>
-
-    <template v-if="bookingForm.type === 'flight'">
-        <div>
-            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">航班號碼</label>
-            <input type="text" v-model="bookingForm.flightNo" placeholder="例：BR 111" class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
-        </div>
-        <div>
-            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">去程時間資訊</label>
-            <input type="text" v-model="bookingForm.departure" placeholder="例：TPE→FUK 07:30" class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
-        </div>
-        <div>
-            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">回程時間資訊</label>
-            <input type="text" v-model="bookingForm.returnFlight" placeholder="例：FUK→TPE 12:30" class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
-        </div>
-    </template>
-
-    <template v-if="bookingForm.type === 'hotel'">
-        <div>
-            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">住宿外觀/照</label>
-            <div class="space-y-2">
-                <img v-if="bookingForm.image" :src="bookingForm.image" class="w-full h-28 object-cover rounded-xl border-2 border-[#5c554a]" />
-                <label class="flex items-center justify-center gap-2 w-full py-2 bg-[#fcfaf4] border-2 border-dashed border-[#5c554a]/30 rounded-xl text-xs text-[#a8a297] cursor-pointer hover:border-[#5c554a] transition-colors font-bold">
-                    <i data-lucide="image-plus" class="w-4 h-4"></i>
-                    {{ bookingForm.image ? '更換手繪照片' : '上傳參考照片' }}
-                    <input type="file" accept="image/*" class="hidden" @change="onBookingImageSelected" />
-                </label>
-                <button v-if="bookingForm.image" @click="bookingForm.image = ''" class="text-[10px] text-red-500 font-bold hover:underline">✕ 移除影像</button>
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">Check In</label>
-                <input type="date" v-model="bookingForm.checkIn" class="w-full sketch-input p-2 text-sm focus:outline-none" />
-            </div>
-            <div>
-                <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">Check Out</label>
-                <input type="date" v-model="bookingForm.checkOut" class="w-full sketch-input p-2 text-sm focus:outline-none" />
-            </div>
-        </div>
-    </template>
-
-    <template v-if="bookingForm.type === 'ticket'">
-        <div class="grid grid-cols-2 gap-3">
-            <div>
-                <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">圖示 Emoji</label>
-                <input type="text" v-model="bookingForm.ticketEmoji" maxlength="4" class="w-full sketch-input p-2 text-center text-xl focus:outline-none" />
-            </div>
-            <div>
-                <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">票券分類</label>
-                <select v-model="bookingForm.category" class="w-full sketch-input p-2 text-sm focus:outline-none text-[#4a463f] font-bold">
-                    <option>交通</option>
-                    <option>體驗</option>
-                    <option>景點門票</option>
-                    <option>餐飲</option>
-                    <option>其他</option>
-                </select>
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3 font-bold">
-            <div>
-                <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase">預計使用日期</label>
-                <input type="date" v-model="bookingForm.useDate" class="w-full sketch-input p-2 text-sm focus:outline-none" />
-            </div>
-            <div>
-                <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase">預計時間</label>
-                <input type="time" v-model="bookingForm.useTime" class="w-full sketch-input p-2 text-sm focus:outline-none" />
-            </div>
-        </div>
-    </template>
-
-    <div>
-        <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">手寫訂單編號/確認碼</label>
-        <input type="text" v-model="bookingForm.orderNo" placeholder="請記下訂位編號或代碼" class="w-full sketch-input p-2 text-sm font-mono focus:outline-none placeholder-[#c4beaf]" />
-    </div>
-    <div>
-        <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">備註說明</label>
-        <textarea v-model="bookingForm.note" rows="2" placeholder="附加說明細節..." class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf] resize-none"></textarea>
-    </div>
-
-    <button @click="saveBooking" class="w-full py-3 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da] transition-all">
-        {{ bookingModal.isEdit ? '儲存變更' : '新增預訂登入' }}
-    </button>
+<div>
+    <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">
+        {{ bookingForm.type === 'flight' ? '航空公司 / 航線名稱' : bookingForm.type === 'hotel' ? '住宿地點/飯店名稱' : '票券或體驗名稱' }}
+    </label>
+    <input type="text" v-model="bookingForm.title" class="w-full sketch-input p-2 text-sm focus:outline-none" />
 </div>
 
+<template v-if="bookingForm.type === 'flight'">
+    <div>
+        <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">航班號碼</label>
+        <input type="text" v-model="bookingForm.flightNo" placeholder="例：BR 111" class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
+    </div>
+    <div>
+        <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">去程時間資訊</label>
+        <input type="text" v-model="bookingForm.departure" placeholder="例：TPE→FUK 07:30" class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
+    </div>
+    <div>
+        <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">回程時間資訊</label>
+        <input type="text" v-model="bookingForm.returnFlight" placeholder="例：FUK→TPE 12:30" class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
+    </div>
+</template>
+
+<template v-if="bookingForm.type === 'hotel'">
+    <div>
+        <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">住宿外觀/照</label>
+        <div class="space-y-2">
+            <img v-if="bookingForm.image" :src="bookingForm.image" class="w-full h-28 object-cover rounded-xl border-2 border-[#5c554a]" />
+            <label class="flex items-center justify-center gap-2 w-full py-2 bg-[#fcfaf4] border-2 border-dashed border-[#5c554a]/30 rounded-xl text-xs text-[#a8a297] cursor-pointer hover:border-[#5c554a] transition-colors font-bold">
+                <i data-lucide="image-plus" class="w-4 h-4"></i>
+                {{ bookingForm.image ? '更換手繪照片' : '上傳參考照片' }}
+                <input type="file" accept="image/*" class="hidden" @change="onBookingImageSelected" />
+            </label>
+            <button v-if="bookingForm.image" @click="bookingForm.image = ''" class="text-[10px] text-red-500 font-bold hover:underline">✕ 移除影像</button>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">Check In</label>
+            <input type="date" v-model="bookingForm.checkIn" class="w-full sketch-input p-2 text-sm focus:outline-none" />
+        </div>
+        <div>
+            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">Check Out</label>
+            <input type="date" v-model="bookingForm.checkOut" class="w-full sketch-input p-2 text-sm focus:outline-none" />
+        </div>
+    </div>
+</template>
+
+<template v-if="bookingForm.type === 'ticket'">
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">圖示 Emoji</label>
+            <input type="text" v-model="bookingForm.ticketEmoji" maxlength="4" class="w-full sketch-input p-2 text-center text-xl focus:outline-none" />
+        </div>
+        <div>
+            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">票券分類</label>
+            <select v-model="bookingForm.category" class="w-full sketch-input p-2 text-sm focus:outline-none text-[#4a463f] font-bold">
+                <option>交通</option>
+                <option>體驗</option>
+                <option>景點門票</option>
+                <option>餐飲</option>
+                <option>其他</option>
+            </select>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 font-bold">
+        <div>
+            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase">預計使用日期</label>
+            <input type="date" v-model="bookingForm.useDate" class="w-full sketch-input p-2 text-sm focus:outline-none" />
+        </div>
+        <div>
+            <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase">預計時間</label>
+            <input type="time" v-model="bookingForm.useTime" class="w-full sketch-input p-2 text-sm focus:outline-none" />
+        </div>
+    </div>
+</template>
+
+<div>
+    <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">手寫訂單編號/確認碼</label>
+    <input type="text" v-model="bookingForm.orderNo" placeholder="請記下訂位編號或代碼" class="w-full sketch-input p-2 text-sm font-mono focus:outline-none placeholder-[#c4beaf]" />
+</div>
+<div>
+    <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">備註說明</label>
+    <textarea v-model="bookingForm.note" rows="2" placeholder="附加說明細節..." class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf] resize-none"></textarea>
+</div>
+
+<button @click="saveBooking" class="w-full py-3 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da] transition-all">
+    {{ bookingModal.isEdit ? '儲存變更' : '新增預訂登入' }}
+</button>
+
+
+</div>
 
 </div>
 
@@ -1768,6 +1815,21 @@
             // ★ 範例清空：行程初始化為空
             const itineraries = ref(JSON.parse(localStorage.getItem(`${APP_ID}__itineraries_v2`)) || EXCEL_ITINERARIES);
 
+            // ── 每日重點 ──
+            const dayHighlights = Vue.reactive(JSON.parse(localStorage.getItem(`${APP_ID}__day_highlights`)) || {});
+            const getDayHighlight = (day) => dayHighlights[day] || '';
+            const setDayHighlight = (day, val) => {
+                dayHighlights[day] = val;
+                localStorage.setItem(`${APP_ID}__day_highlights`, JSON.stringify(dayHighlights));
+                if(_st)clearTimeout(_st); // will be saved via debounced saveToStorage
+                saveDayHighlightsCloud();
+            };
+            let _dhTimer = null;
+            const saveDayHighlightsCloud = () => {
+                if(_dhTimer) clearTimeout(_dhTimer);
+                _dhTimer = setTimeout(() => saveToStorage(), 800);
+            };
+
             // ★ 範例清空：資源備忘初始化為空
             const resources = ref(JSON.parse(localStorage.getItem(`${APP_ID}__resources`)) || []);
 
@@ -2085,6 +2147,7 @@
                 localStorage.setItem(K('itineraries_v2'), JSON.stringify(itineraries.value));
                 localStorage.setItem(K('resources'), JSON.stringify(resources.value));
                 localStorage.setItem(K('checklist'), JSON.stringify(checklist.value));
+                localStorage.setItem(K('day_highlights'), JSON.stringify(dayHighlights));
                 if(_st)clearTimeout(_st);
                 // 立刻標記為「儲存中」，阻止 watch 在這段時間覆蓋本地資料
                 window._saving = true;
@@ -2093,7 +2156,7 @@
                 _st=setTimeout(async()=>{
                     if(!window._uid){ window._saving=false; return; }
                     try{
-                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,updatedAt:pendingTs});
+                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,updatedAt:pendingTs});
                     }
                     catch(e){console.warn('Firestore 同步手帳失敗',e);}
                     finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
@@ -2357,7 +2420,7 @@
             };
 
             // ── Excel 匯入功能 ──
-            const excelImportModal = ref({ isOpen: false, filename: '', rows: [], dayRange: '' });
+            const excelImportModal = ref({ isOpen: false, filename: '', rows: [], dayRange: '', highlights: {}, highlightCount: 0 });
 
             const fracToTime = (t) => {
                 if (t === null || t === undefined || t === '') return '12:00:00';
@@ -2442,7 +2505,31 @@
                     const days = [...new Set(rows.map(r => r.day).filter(d => d <= 26))].sort((a,b)=>a-b);
                     const dayRange = days.length ? `第 ${days[0]} 天 ～ 第 ${days[days.length-1]} 天` : '創意備案頁面';
 
-                    excelImportModal.value = { isOpen: true, filename: file.name, rows, dayRange };
+                    // ── 解析「每日重點」Sheet ──
+                    const highlights = {};
+                    const hlSheetName = wb.SheetNames.find(n => n.includes('重點') || n.toLowerCase().includes('highlight'));
+                    if (hlSheetName) {
+                        const ws2 = wb.Sheets[hlSheetName];
+                        const raw2 = XLSX.utils.sheet_to_json(ws2, { header: 1, defval: '' });
+                        let hlHeader = 0;
+                        for (let i = 0; i < Math.min(5, raw2.length); i++) {
+                            const lower = raw2[i].map(c => String(c).toLowerCase());
+                            if (lower.includes('day') || lower.includes('highlight')) { hlHeader = i; break; }
+                        }
+                        const hlHeaders = raw2[hlHeader].map(c => String(c).toLowerCase().trim());
+                        const iHDay = hlHeaders.findIndex(h => h === 'day' || h.includes('day') || h.includes('天'));
+                        const iHText = hlHeaders.findIndex(h => h.includes('highlight') || h.includes('重點'));
+                        if (iHDay !== -1 && iHText !== -1) {
+                            for (let i = hlHeader + 1; i < raw2.length; i++) {
+                                const r = raw2[i];
+                                const d = parseInt(r[iHDay]);
+                                const txt = safe(r[iHText]);
+                                if (d > 0 && txt) highlights[d] = txt;
+                            }
+                        }
+                    }
+
+                    excelImportModal.value = { isOpen: true, filename: file.name, rows, dayRange, highlights, highlightCount: Object.keys(highlights).length };
                     nextTick(() => lucide.createIcons());
                 } catch (err) {
                     console.error(err);
@@ -2452,15 +2539,24 @@
 
             const confirmExcelImport = (mode) => {
                 const newRows = excelImportModal.value.rows;
+                const newHighlights = excelImportModal.value.highlights || {};
                 if (mode === 'replace') {
                     itineraries.value = newRows;
+                    // 覆蓋每日重點
+                    Object.keys(dayHighlights).forEach(k => delete dayHighlights[k]);
+                    Object.assign(dayHighlights, newHighlights);
                     showToast(`已覆寫匯入 ${newRows.length} 筆漫遊手記`);
                 } else {
                     const existing = new Set(itineraries.value.map(r => `${r.day}__${r.title}`));
                     const toAdd = newRows.filter(r => !existing.has(`${r.day}__${r.title}`));
                     itineraries.value = [...itineraries.value, ...toAdd];
+                    // 合併每日重點（不覆蓋已有內容）
+                    Object.keys(newHighlights).forEach(d => {
+                        if (!dayHighlights[d]) dayHighlights[d] = newHighlights[d];
+                    });
                     showToast(`已合併手帳，補入 ${toAdd.length} 筆全新節點`);
                 }
+                localStorage.setItem(`${APP_ID}__day_highlights`, JSON.stringify(dayHighlights));
                 saveToStorage();
                 excelImportModal.value.isOpen = false;
                 nextTick(() => lucide.createIcons());
@@ -2481,6 +2577,7 @@
                 if(d.checklist)checklist.value=d.checklist;
                 if(d.bookings)bookings.value=d.bookings;
                 if(d.map_pins)mapPins.value=d.map_pins;
+                if(d.day_highlights){ Object.keys(dayHighlights).forEach(k=>delete dayHighlights[k]); Object.assign(dayHighlights,d.day_highlights); }
                 nextTick(()=>lucide.createIcons());
             };
             onMounted(() => {
@@ -2527,7 +2624,8 @@
                 scanPhoto, scanForm, onScanPhotoSelected, clearScanPhoto, submitScanExpense,
                 excelImportModal, onExcelImport, confirmExcelImport,
                 mapPins, mapPinnedItems, isMapPinned, toggleMapPin, clearAllMapPins, mapCoords, mapGeoFailed, mapGeocoding, refreshLeafletMap,
-                saveToStorage
+                saveToStorage,
+                dayHighlights, getDayHighlight, setDayHighlight
             };
         }
     }).mount('#app');
