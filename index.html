@@ -941,31 +941,28 @@ body {
                 <span class="text-xs font-mono bg-[#fcfaf4] border border-[#5c554a]/30 text-[#5c554a] px-2 py-0.5 rounded-md font-bold">{{ formatTimeShort(item.time) }}</span>
                 <span v-if="item.type" class="text-[10px] border border-[#5c554a]/30 text-[#8c8577] px-1.5 py-0.5 rounded-md uppercase font-bold">{{ item.type }}</span>
             </div>
-            <div>
-                <h4 class="text-sm font-bold text-[#4a463f] flex items-center gap-1.5">
+             <div>
+                <h4 class="text-sm font-bold text-[#4a463f]">
                     {{ item.title }}
-                    <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank" class="text-blue-500/80 hover:text-blue-700 inline-block">
-                        <i data-lucide="map" class="w-3.5 h-3.5"></i>
-                    </a>
                 </h4>
                 <p v-if="item.note" class="text-xs text-[#a8a297] font-bold mt-1 bg-[#fff] p-2 rounded-lg border border-[#5c554a]/20">{{ item.note }}</p>
             </div>
-            <!-- 底部操作列：編輯/刪除（左下）、加入行程（右下） -->
             <div class="flex items-center gap-2 pt-1">
-                <button @click="openEditItineraryModal(item)"
-                    class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-[#5c554a]/30 text-[#a8a297] hover:text-[#5c554a] hover:bg-[#eae5da]/40 transition-colors">
+                <button @click="openEditItineraryModal(item)" class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-[#5c554a]/30 text-[#a8a297] hover:text-[#5c554a] hover:bg-[#eae5da]/40 transition-colors">
                     <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
                 </button>
-                <button @click="deleteItinerary(item.id)"
-                    class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-[#5c554a]/30 text-[#a8a297] hover:text-red-500 hover:bg-red-50 transition-colors">
+                <button @click="deleteItinerary(item.id)" class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-[#5c554a]/30 text-[#a8a297] hover:text-red-500 hover:bg-red-50 transition-colors">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                 </button>
-                <button @click="openAddToSchedule(item)"
-                    class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold bg-[#eae5da]/40 hover:bg-[#eae5da] text-[#5c554a] border border-[#5c554a] transition-all">
+                <button @click="openAddToSchedule(item)" class="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-bold bg-[#eae5da]/40 hover:bg-[#eae5da] text-[#5c554a] border border-[#5c554a] transition-all">
                     <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
                     加入行程
                 </button>
+                <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank" class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-[#5c554a]/30 text-blue-500/80 hover:text-blue-700 hover:bg-blue-50 transition-colors">
+                    <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+                </a>
             </div>
+
 
         </div>
     </div>
@@ -993,11 +990,32 @@ body {
                 <p v-if="!appIdCollapsed" class="text-sm font-mono font-bold tracking-wide">{{ appId }}</p>
                 <p v-if="!appIdCollapsed" class="text-[10px] opacity-70 leading-relaxed font-bold">複製檔案後在程式最上方修改 APP_ID 即可分隔不同旅程數據，實現完全隔離。</p>
             </div>
-            <button @click="appIdCollapsed = !appIdCollapsed" class="shrink-0 mt-0.5 text-[#faf8f5]/60 hover:text-[#faf8f5] transition-colors text-[10px] font-bold border border-[#faf8f5]/30 rounded px-1.5 py-0.5">
+             <button @click="appIdCollapsed = !appIdCollapsed" class="shrink-0 mt-0.5 text-[#faf8f5]/60 hover:text-[#faf8f5] transition-colors text-[10px] font-bold border border-[#faf8f5]/30 rounded px-1.5 py-0.5">
                 {{ appIdCollapsed ? '展開' : '收起' }}
             </button>
         </div>
     </div>
+
+<!-- 全系統備份與還原 -->
+<div class="sketch-card p-5 space-y-3">
+    <h3 class="text-xs uppercase tracking-wider text-[#4a463f] font-bold border-b-2 border-dashed border-[#5c554a]/30 pb-2 flex items-center justify-between">
+        <span>💾 全系統備份與還原</span>
+        <span class="text-[10px] text-[#a8a297] font-normal">匯出 / 匯入 JSON</span>
+    </h3>
+    <p class="text-[10px] text-[#a8a297] font-bold leading-relaxed">
+        將所有手帳資料（行程、備案行程、記帳、預算、類別、備忘資源、訂票、手繪地圖等）打包成一個 JSON 檔，可用於備份或換裝置還原。
+    </p>
+    <div class="flex gap-2">
+        <button @click="exportAllData" class="flex-1 flex items-center justify-center gap-1.5 py-2 sketch-btn text-xs font-bold hover:bg-[#eae5da] transition-colors">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>匯出備份
+        </button>
+        <label class="flex-1 flex items-center justify-center gap-1.5 py-2 sketch-btn text-xs font-bold hover:bg-[#eae5da] transition-colors cursor-pointer">
+            <i data-lucide="upload" class="w-3.5 h-3.5"></i>匯入還原
+            <input type="file" accept="application/json,.json" class="hidden" @change="importAllData" />
+        </label>
+    </div>
+</div>
+
 
 <!-- 支出類別 + 支付方式：電腦版並排 -->
 
@@ -2005,6 +2023,7 @@ body {
                 const s = new Set(expandedBackupIdxSet.value);
                 if (s.has(idx)) s.delete(idx); else s.add(idx);
                 expandedBackupIdxSet.value = s;
+            nextTick(() => lucide.createIcons());
             };
             const isBackupExpanded = (idx) => expandedBackupIdxSet.value.has(idx);
 
@@ -2205,6 +2224,88 @@ body {
                     finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
                 },800);
             };
+
+// ★ 全系統備份：匯出 JSON
+            const exportAllData = () => {
+                const payload = {
+                    app: APP_ID,
+                    exportedAt: new Date().toISOString(),
+                    version: 1,
+                    data: {
+                        categories: categories.value,
+                        paymethods: payMethods.value,
+                        budgets: categoryBudgets,
+                        expenses: expenses.value,
+                        itineraries_v2: itineraries.value,
+                        resources: resources.value,
+                        checklist: checklist.value,
+                        day_highlights: dayHighlights,
+                        bookings: bookings.value,
+                        map_pins: mapPins.value,
+                        backup_labels: backupDayLabels.value,
+                        trip_info: tripInfo.value,
+                        weather_city: weatherCityInput.value,
+                        weather_city2: weatherCityInput2.value
+                    }
+                };
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const ts = new Date().toISOString().slice(0, 10);
+                a.href = url;
+                a.download = `${APP_ID}_備份_${ts}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('✅ 已匯出備份檔');
+            };
+
+            // ★ 全系統還原：匯入 JSON
+            const importAllData = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const parsed = JSON.parse(ev.target.result);
+                        const d = parsed.data || parsed; // 容錯：沒有 data 包裝也能讀
+                        if (!confirm('匯入將覆蓋目前所有手帳資料（行程、記帳、預算、備忘等），確定要繼續嗎？')) {
+                            e.target.value = '';
+                            return;
+                        }
+                        if (d.categories) categories.value = d.categories;
+                        if (d.paymethods) payMethods.value = d.paymethods;
+                        if (d.budgets) { Object.keys(categoryBudgets).forEach(k => delete categoryBudgets[k]); Object.assign(categoryBudgets, d.budgets); }
+                        if (d.expenses) expenses.value = d.expenses;
+                        if (d.itineraries_v2) itineraries.value = d.itineraries_v2;
+                        if (d.resources) resources.value = d.resources;
+                        if (d.checklist) checklist.value = d.checklist;
+                        if (d.day_highlights) { Object.keys(dayHighlights).forEach(k => delete dayHighlights[k]); Object.assign(dayHighlights, d.day_highlights); }
+                        if (d.bookings) bookings.value = d.bookings;
+                        if (d.map_pins) mapPins.value = d.map_pins;
+                        if (d.backup_labels) backupDayLabels.value = d.backup_labels;
+                        if (d.trip_info) tripInfo.value = d.trip_info;
+                        if (typeof d.weather_city === 'string') weatherCityInput.value = d.weather_city;
+                        if (typeof d.weather_city2 === 'string') weatherCityInput2.value = d.weather_city2;
+
+                        localStorage.setItem(K('backup_labels'), JSON.stringify(backupDayLabels.value));
+                        localStorage.setItem(K('trip_info'), JSON.stringify(tripInfo.value));
+                        localStorage.setItem(K('weather_city'), weatherCityInput.value);
+                        localStorage.setItem(K('weather_city2'), weatherCityInput2.value);
+                        saveToStorage();
+                        nextTick(() => lucide.createIcons());
+                        showToast('✅ 匯入完成，資料已還原');
+                    } catch (err) {
+                        console.error(err);
+                        showToast('❌ 匯入失敗，請確認是本系統匯出的 JSON 檔');
+                    } finally {
+                        e.target.value = '';
+                    }
+                };
+                reader.readAsText(file, 'utf-8');
+            };
+
 
             // ── 手繪地圖 ──
             const mapPins = ref(JSON.parse(localStorage.getItem(`${APP_ID}__map_pins`)) || []);
@@ -2670,7 +2771,8 @@ body {
                 saveToStorage,
                 dayHighlights, getDayHighlight, setDayHighlight,
                 formatTimeShort, budgetsCollapsed, collapsedCategories, isCategoryCollapsed, toggleCategoryCollapse,
-                expandedItineraryIds, isItineraryExpanded, toggleItineraryExpand
+                expandedItineraryIds, isItineraryExpanded, toggleItineraryExpand,
+                exportAllData, importAllData
             };
 
         }
