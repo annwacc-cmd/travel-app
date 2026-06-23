@@ -673,7 +673,34 @@ body {
             <span class="text-[#a8a297]">類別小計: NT$ {{ formatNumber(group.total) }}</span>
         </div>
         <template v-if="!isCategoryCollapsed(category)">
-        <div v-for="item in group.items" :key="item.id" class="flex justify-between items-center p-3 sketch-card">
+        <div v-for="item in group.items" :key="item.id" class="sketch-card overflow-hidden">
+    <img v-if="item.hasPhoto && expensePhotos[item.id]"
+        :src="expensePhotos[item.id]"
+        class="w-full h-28 object-cover border-b border-[#5c554a]/20 cursor-pointer"
+        @click="viewingPhoto = expensePhotos[item.id]" />
+    <div class="flex justify-between items-center p-3">
+        <div class="flex items-center space-x-3">
+            <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-[#5c554a] bg-[#eae5da]/40 text-[#5c554a]">{{ item.payMethod }}</span>
+            <div>
+                <p class="text-sm font-bold text-[#4a463f]">{{ item.title }}</p>
+                <p class="text-[10px] text-[#a8a297] font-bold">{{ item.category }}</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="text-sm font-bold text-[#4a463f]">NT$ {{ formatNumber(item.amount) }}</span>
+            <button @click="deleteExpense(item.id)" class="text-[#a8a297] hover:text-red-500 transition-colors">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+</div>
+<!-- 照片全螢幕檢視 -->
+<div v-if="viewingPhoto" @click="viewingPhoto=null"
+    class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-pointer">
+    <img :src="viewingPhoto" class="max-w-full max-h-full rounded-xl object-contain shadow-2xl" />
+    <button class="absolute top-5 right-5 text-white text-2xl font-bold">✕</button>
+</div>
+
             <div class="flex items-center space-x-3">
                 <span class="text-[10px] text-[#a8a297] font-bold">{{ item.date }}</span>
                 <div>
@@ -1080,9 +1107,16 @@ body {
                     <i data-lucide="calendar-plus" class="w-3.5 h-3.5"></i>
                     加入行程
                 </button>
-                <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank" class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-[#5c554a]/30 text-blue-500/80 hover:text-blue-700 hover:bg-blue-50 transition-colors">
-                    <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
-                </a>
+                <!-- 📍 定位 -->
+        <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank"
+            class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-blue-200 text-blue-500 hover:bg-blue-50 transition-colors" title="Google 定位">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+        </a>
+        <!-- 🗺 導航 -->
+        <a v-if="item.nav && item.nav.startsWith('http')" :href="item.nav" target="_blank"
+            class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-green-200 text-green-600 hover:bg-green-50 transition-colors" title="Google 導航">
+            <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
+        </a>
             </div>
 
 
@@ -1245,6 +1279,9 @@ body {
             <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>翻閱地理繪卷中...
         </span>
     </div>
+<!-- 天數顏色圖例 -->
+<div id="map-day-legend" class="flex flex-wrap gap-x-3 gap-y-1 mt-2 px-1 pb-1"></div>
+
 </div>
 
 <!-- 景點手寫明細 -->
@@ -1337,9 +1374,10 @@ body {
                 <input type="text" v-model="itineraryForm.type" class="w-full sketch-input p-2 text-sm focus:outline-none">
             </div>
         </div>
-        <div>
-            <label class="text-[10px] text-[#a8a297] font-bold block mb-1">Google 地圖連結</label>
-            <input type="url" v-model="itineraryForm.google" class="w-full sketch-input p-2 text-sm focus:outline-none">
+       <div>
+            <label class="text-[10px] text-[#a8a297] font-bold block mb-1">🗺 導航連結 (Google Maps 路線)</label>
+            <input type="url" v-model="itineraryForm.nav" placeholder="https://www.google.com/maps/dir/..."
+                class="w-full sketch-input p-2 text-sm focus:outline-none">
         </div>
         <div>
             <label class="text-[10px] text-[#a8a297] font-bold block mb-1">交通配置描述</label>
@@ -1970,6 +2008,9 @@ body {
             const expenses = ref(JSON.parse(localStorage.getItem(`${APP_ID}__expenses`)) || []);
             const expenseModalOpen = ref(false);
             const expenseForm = ref({ title: '', amount: null, date: '', category: '餐飲', payMethod: '現金' });
+const expensePhotos = Vue.reactive(JSON.parse(localStorage.getItem(`${APP_ID}__expense_photos`) || '{}'));
+const viewingPhoto = ref(null);
+
 
             // ★ 範例清空：行程初始化為空
             const itineraries = ref(JSON.parse(localStorage.getItem(`${APP_ID}__itineraries_v2`)) || EXCEL_ITINERARIES);
@@ -1999,7 +2040,7 @@ body {
             const checklistForm = ref({ title: '', note: '' });
 
             const itineraryModal = ref({ isOpen: false, isEdit: false, currentId: null });
-            const itineraryForm = ref({ day: 1, time: '', type: 'spot', title: '', transport: '', google: '', note: '' });
+            const itineraryForm = ref({ day: 1, time: '', type: 'spot', title: '', transport: '', google: '', nav: '', note: '' });
             const resourceModal = ref({ isOpen: false, isEdit: false, currentId: null });
             const resourceForm = ref({ type: 'japanese', title: '', content: '' });
             const toast = ref({ show: false, message: '' });
@@ -2089,7 +2130,7 @@ body {
             };
 
             const openAddBackupItineraryModal = () => {
-                itineraryForm.value = { day: 27, time: '12:00:00', type: 'spot', title: '', transport: '', google: '', note: '' };
+                itineraryForm.value = { day: 27, time: '12:00:00', type: 'spot', title: '', transport: '', google: '', nav: '', note: '' };
                 itineraryModal.value = { isOpen: true, isEdit: false, currentId: null };
             };
 
@@ -2504,39 +2545,75 @@ body {
                 renderLeafletMap();
             };
 
-            const renderLeafletMap = () => {
-                if (!window.L) return;
-                const el = document.getElementById('leaflet-map');
-                if (!el) return;
+            const DAY_COLORS = [
+    '#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c',
+    '#3498db','#9b59b6','#e91e63','#ff5722','#607d8b',
+    '#795548','#8bc34a','#00bcd4','#673ab7','#ff9800',
+    '#4caf50','#2196f3','#9c27b0','#f44336','#009688',
+    '#ffc107','#3f51b5','#ff4081','#76ff03','#00e5ff'
+];
 
-                if (leafletMap) {
-                    leafletMap.remove();
-                    leafletMap = null;
-                }
-                leafletMarkers = [];
-                leafletMap = L.map('leaflet-map');
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19
-                }).addTo(leafletMap);
+const renderLeafletMap = () => {
+    if (!window.L) return;
+    const el = document.getElementById('leaflet-map');
+    if (!el) return;
 
-                const coords = mapPinnedItems.value
-                    .filter(item => mapCoords[item.id])
-                    .map((item, idx) => {
-                        const c = mapCoords[item.id];
-                        const marker = L.marker([c.lat, c.lng]).addTo(leafletMap);
-                        marker.bindPopup(`<b>${idx+1}. ${item.title}</b><br><span style="font-size:11px;color:#888">第 ${item.day} 天 ${item.time}</span>`);
-                        leafletMarkers.push(marker);
-                        return [c.lat, c.lng];
-                    });
+    if (leafletMap) { leafletMap.remove(); leafletMap = null; }
+    leafletMarkers = [];
+    leafletMap = L.map('leaflet-map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors', maxZoom: 19
+    }).addTo(leafletMap);
 
-                if (coords.length > 0) {
-                    const group = L.featureGroup(leafletMarkers);
-                    leafletMap.fitBounds(group.getBounds().pad(0.2));
-                } else {
-                    leafletMap.setView([25.0330, 121.5654], 12);
-                }
-            };
+    const usedDays = new Set();
+    const allCoords = [];
+
+    mapPinnedItems.value
+        .filter(item => mapCoords[item.id])
+        .forEach((item, idx) => {
+            const c = mapCoords[item.id];
+            const color = DAY_COLORS[(item.day - 1) % DAY_COLORS.length];
+            usedDays.add(item.day);
+
+            const icon = L.divIcon({
+                html: `<div style="background:${color};width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:bold;color:#fff">${idx + 1}</div>`,
+                iconSize: [16, 16], iconAnchor: [8, 8], className: ''
+            });
+
+            const popup = `
+                <b style="font-size:12px">${idx + 1}. ${item.title}</b>
+                <div style="font-size:11px;color:#888;margin:2px 0">第 ${item.day} 天 ⏱ ${item.time}</div>
+                <div style="margin-top:4px;display:flex;gap:6px">
+                    ${item.google && item.google.startsWith('http') ? `<a href="${item.google}" target="_blank" style="background:#e0f2fe;color:#0277bd;font-size:11px;padding:2px 8px;border-radius:3px;text-decoration:none;font-weight:500">📍 定位</a>` : ''}
+                    ${item.nav && item.nav.startsWith('http') ? `<a href="${item.nav}" target="_blank" style="background:#e8f5e9;color:#2e7d32;font-size:11px;padding:2px 8px;border-radius:3px;text-decoration:none;font-weight:500">🗺 導航</a>` : ''}
+                </div>`;
+
+            const marker = L.marker([c.lat, c.lng], { icon }).bindPopup(popup);
+            marker.addTo(leafletMap);
+            leafletMarkers.push(marker);
+            allCoords.push([c.lat, c.lng]);
+        });
+
+    // 更新天數圖例
+    const legend = document.getElementById('map-day-legend');
+    if (legend) {
+        const days = [...usedDays].sort((a, b) => a - b);
+        legend.innerHTML = days.map(d => {
+            const color = DAY_COLORS[(d - 1) % DAY_COLORS.length];
+            return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:bold;color:#5c554a">
+                <span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0"></span>第 ${d} 天
+            </span>`;
+        }).join('');
+    }
+
+    if (allCoords.length > 0) {
+        const group = L.featureGroup(leafletMarkers);
+        leafletMap.fitBounds(group.getBounds().pad(0.2));
+    } else {
+        leafletMap.setView([25.0330, 121.5654], 12);
+    }
+};
+
 
             const refreshLeafletMap = async () => {
                 mapPinnedItems.value.forEach(item => {
@@ -2583,10 +2660,14 @@ body {
                 showToast('開銷明細已載入帳冊');
             };
             const deleteExpense = (id) => {
-                expenses.value = expenses.value.filter(e => e.id !== id);
-                saveToStorage();
-                showToast('開銷帳目已清除');
-            };
+    expenses.value = expenses.value.filter(e => e.id !== id);
+    if (expensePhotos[id]) {
+        delete expensePhotos[id];
+        localStorage.setItem(`${APP_ID}__expense_photos`, JSON.stringify(expensePhotos));
+    }
+    saveToStorage();
+    showToast('開銷帳目已清除');
+};
 
             // ── 掃描頁：拍照 + 手動記帳 ──
             const scanPhoto = ref(null);
@@ -2609,28 +2690,47 @@ body {
                 e.target.value = '';
             };
 
+const compressPhoto = (dataUrl) => new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+        const MAX = 400;
+        const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', 0.5));
+    };
+    img.src = dataUrl;
+});
+
             const clearScanPhoto = () => { scanPhoto.value = null; };
 
-            const submitScanExpense = () => {
-                if (!scanForm.value.amount || !scanForm.value.title) {
-                    showToast('請填妥明細名稱與金額');
-                    return;
-                }
-                expenses.value.unshift({
-                    id: Date.now(),
-                    ...scanForm.value,
-                    amount: Number(scanForm.value.amount)
-                });
-                saveToStorage();
-                scanPhoto.value = null;
-                scanForm.value = {
-                    title: '', amount: null,
-                    date: new Date().toISOString().split('T')[0],
-                    category: categories.value[0] || '其他',
-                    payMethod: payMethods.value[0] || '現金'
-                };
-                showToast('收據帳目已成功登打');
-            };
+            const submitScanExpense = async () => {
+    if (!scanForm.value.amount || !scanForm.value.title) {
+        showToast('請填妥明細名稱與金額'); return;
+    }
+    const id = Date.now();
+    if (scanPhoto.value) {
+        const compressed = await compressPhoto(scanPhoto.value);
+        expensePhotos[id] = compressed;
+        localStorage.setItem(`${APP_ID}__expense_photos`, JSON.stringify(expensePhotos));
+    }
+    expenses.value.unshift({
+        id, ...scanForm.value,
+        amount: Number(scanForm.value.amount),
+        hasPhoto: !!scanPhoto.value
+    });
+    saveToStorage();
+    scanPhoto.value = null;
+    scanForm.value = {
+        title: '', amount: null,
+        date: new Date().toISOString().split('T')[0],
+        category: categories.value[0] || '其他',
+        payMethod: payMethods.value[0] || '現金'
+    };
+    showToast('收據帳目已成功登打');
+};
 
             const simulateScan = () => {};
 
