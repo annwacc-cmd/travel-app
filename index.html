@@ -1934,6 +1934,7 @@ body {
             const saveTripInfo = () => {
                 tripInfo.value = { ...tripInfoForm.value };
                 localStorage.setItem(`${APP_ID}__trip_info`, JSON.stringify(tripInfo.value));
+                saveToStorage(); // ✨ 新增這行：立即觸發同步上傳雲端
                 tripInfoModal.value = false;
                 showToast('手帳封面已重新設定');
             };
@@ -2478,15 +2479,30 @@ const viewingPhoto = ref(null);
                 localStorage.setItem(K('resources'), JSON.stringify(resources.value));
                 localStorage.setItem(K('checklist'), JSON.stringify(checklist.value));
                 localStorage.setItem(K('day_highlights'), JSON.stringify(dayHighlights));
+                localStorage.setItem(K('trip_info'), JSON.stringify(tripInfo.value)); // ✨ 新增這行：同步寫入本機快取
+                
                 if(_st)clearTimeout(_st);
-                // 立刻標記為「儲存中」，阻止 watch 在這段時間覆蓋本地資料
                 window._saving = true;
                 const pendingTs = Date.now();
-                window._lat = pendingTs; // 預先佔位時間戳，讓 watch 的比對失敗
+                window._lat = pendingTs; 
                 _st=setTimeout(async()=>{
                     if(!window._uid){ window._saving=false; return; }
                     try{
-                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,updatedAt:pendingTs});
+                        // ✨ 如下所示，在傳送給雲端的欄位中補上 trip_info: tripInfo.value
+                        await window._fsSave(window._uid,APP_ID,{
+                            categories:categories.value,
+                            paymethods:payMethods.value,
+                            budgets:categoryBudgets,
+                            expenses:expenses.value,
+                            itineraries_v2:itineraries.value,
+                            resources:resources.value,
+                            checklist:checklist.value,
+                            bookings:bookings.value,
+                            map_pins:mapPins.value,
+                            day_highlights:dayHighlights,
+                            trip_info: tripInfo.value, // ✨ 新增這行：打包上傳到雲端資料庫
+                            updatedAt:pendingTs
+                        });
                     }
                     catch(e){console.warn('Firestore 同步手帳失敗',e);}
                     finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
@@ -3049,6 +3065,13 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                 if(d.bookings)bookings.value=d.bookings;
                 if(d.map_pins)mapPins.value=d.map_pins;
                 if(d.day_highlights){ Object.keys(dayHighlights).forEach(k=>delete dayHighlights[k]); Object.assign(dayHighlights,d.day_highlights); }
+                
+                // ✨ 新增以下區段：當雲端有更新手記封面或出發日期時，自動載入並更新畫面
+                if(d.trip_info){
+                    tripInfo.value = d.trip_info;
+                    localStorage.setItem(K('trip_info'), JSON.stringify(d.trip_info));
+                }
+                
                 nextTick(()=>lucide.createIcons());
             };
             onMounted(() => {
