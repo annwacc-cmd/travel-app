@@ -907,7 +907,63 @@ body {
 <!-- 行前準備 (Checklist) -->
 
 <div v-if="resourceTab === 'checklist'" class="space-y-2.5">
-    <div v-for="(item, idx) in checklist" :key="item.id" 
+<!-- 自動抓取行程中的 Hotel 與 PASS 項目（帶入出發日期計算） -->
+        <div v-if="importantItineraries.hotel.length > 0 || importantItineraries.pass.length > 0" class="mb-5 space-y-4">
+            
+            <!-- 住宿提醒 -->
+            <div v-if="importantItineraries.hotel.length > 0" class="space-y-2.5">
+                <div @click="hotelReminderCollapsed = !hotelReminderCollapsed" 
+                     class="flex justify-between items-center cursor-pointer select-none border-b-2 border-dashed border-[#5c554a]/30 pb-1">
+                    <p class="text-[10px] text-[#8c8577] font-bold tracking-wider uppercase flex items-center gap-1">
+                        <span>🏨 行程住宿提醒</span>
+                        <span class="text-[9px] font-normal text-[#a8a297]">({{ importantItineraries.hotel.length }})</span>
+                    </p>
+                    <i :data-lucide="hotelReminderCollapsed ? 'chevron-down' : 'chevron-up'" class="w-3.5 h-3.5 text-[#a8a297]"></i>
+                </div>
+                
+                <div v-if="!hotelReminderCollapsed" class="space-y-2.5">
+                    <div v-for="hotel in importantItineraries.hotel" :key="'hotel-'+hotel.id" 
+                         class="sketch-card p-3.5 flex justify-between items-center bg-[#fcfaf4] border-[#5c554a]/40 border-dashed opacity-90">
+                        <div class="flex items-center space-x-3 flex-1 min-w-0 pr-2">
+                            <span class="text-lg shrink-0 drop-shadow-sm">🏨</span>
+                            <div class="min-w-0 flex-1 font-bold">
+                                <p class="text-sm text-[#4a463f]">{{ hotel.title }}</p>
+                                <p class="text-[10px] text-[#a8a297] truncate mt-0.5">
+                                    第 {{ hotel.day }} 天 <span class="text-[#8c8577]">({{ getReminderDate(hotel.day) }})</span> ⏱ {{ formatTimeShort(hotel.time) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PASS / 交通票券提醒 -->
+            <div v-if="importantItineraries.pass.length > 0" class="space-y-2.5">
+                <div @click="passReminderCollapsed = !passReminderCollapsed" 
+                     class="flex justify-between items-center cursor-pointer select-none border-b-2 border-dashed border-[#5c554a]/30 pb-1">
+                    <p class="text-[10px] text-[#8c8577] font-bold tracking-wider uppercase flex items-center gap-1">
+                        <span>🎫 PASS / 交通票券提醒</span>
+                        <span class="text-[9px] font-normal text-[#a8a297]">({{ importantItineraries.pass.length }})</span>
+                    </p>
+                    <i :data-lucide="passReminderCollapsed ? 'chevron-down' : 'chevron-up'" class="w-3.5 h-3.5 text-[#a8a297]"></i>
+                </div>
+                
+                <div v-if="!passReminderCollapsed" class="space-y-2.5">
+                    <div v-for="ticket in importantItineraries.pass" :key="'pass-'+ticket.id" 
+                         class="sketch-card p-3.5 flex justify-between items-center bg-[#f4f8fc] border-[#5c554a]/40 border-dashed opacity-90">
+                        <div class="flex items-center space-x-3 flex-1 min-w-0 pr-2">
+                            <span class="text-lg shrink-0 drop-shadow-sm">🚆</span>
+                            <div class="min-w-0 flex-1 font-bold">
+                                <p class="text-sm text-[#4a463f]">{{ ticket.title }}</p>
+                                <p class="text-[10px] text-[#a8a297] truncate mt-0.5">
+                                    第 {{ ticket.day }} 天 <span class="text-[#8c8577]">({{ getReminderDate(ticket.day) }})</span> ⏱ {{ formatTimeShort(ticket.time) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>    <div v-for="(item, idx) in checklist" :key="item.id" 
          class="sketch-card p-3.5 flex justify-between items-center transition-all"
          :class="{'opacity-50 bg-[#f4f1ea]/40': item.checked}">
 
@@ -2091,7 +2147,55 @@ const viewingPhoto = ref(null);
             });
 
             const filteredResources = computed(() => resources.value.filter(r => r.type === resourceTab.value));
+// ── 行行前準備：住宿與票券提醒的摺疊變數 (預設展開 false) ──
+            const hotelReminderCollapsed = ref(false);
+            const passReminderCollapsed = ref(false);
 
+            // 監聽摺疊狀態，當狀態改變時重新繪製 Lucide 圖示 (切換上下箭頭)
+            Vue.watch([hotelReminderCollapsed, passReminderCollapsed], () => {
+                nextTick(() => lucide.createIcons());
+            });
+
+            // 自動篩選行程中重要的準備項目 (Hotel 與 PASS)
+            const importantItineraries = computed(() => {
+                const hotel = [];
+                const pass = [];
+
+                itineraries.value.forEach(item => {
+                    if (!item.type) return;
+                    const typeStr = String(item.type).toLowerCase().replace(/\s/g, ''); // 轉小寫並去除空白
+                    
+                    if (typeStr === 'hotel') {
+                        hotel.push(item);
+                    } else if (typeStr.includes('pass') || typeStr.includes('票券')) {
+                        pass.push(item);
+                    }
+                });
+
+                return { hotel, pass };
+            });
+
+// 根據「出發日期」與「天數」動態計算西元實際日期與星期
+            const getReminderDate = (day) => {
+                if (!tripInfo.value.startDate) return '未設定出發日';
+                
+                // 如果是備案行程天數 (27 ~ 31)，顯示備案標籤名稱，不進行日期加算
+                if (day > 26) {
+                    return backupDayLabels.value[day - 27] || '備案行程';
+                }
+                
+                const baseDate = new Date(tripInfo.value.startDate);
+                if (isNaN(baseDate.getTime())) return '日期格式錯誤';
+                
+                // 加算天數（第 1 天為出發日當天，故加 day - 1）
+                baseDate.setDate(baseDate.getDate() + (day - 1));
+                
+                const month = String(baseDate.getMonth() + 1).padStart(2, '0');
+                const date = String(baseDate.getDate()).padStart(2, '0');
+                const weekDay = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][baseDate.getDay()];
+                
+                return `${month}/${date} ${weekDay}`;
+            };
             const backupItinerariesByDay = (day) => {
                 return [...itineraries.value]
                     .filter(item => item.day === day)
@@ -2995,7 +3099,7 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                 dayHighlights, getDayHighlight, setDayHighlight,
                 formatTimeShort, budgetsCollapsed, collapsedCategories, isCategoryCollapsed, toggleCategoryCollapse,
                 expandedItineraryIds, isItineraryExpanded, toggleItineraryExpand,
-                exportAllData, importAllData
+                exportAllData, importAllData, importantItineraries, hotelReminderCollapsed, passReminderCollapsed, getReminderDate
             };
 
         }
