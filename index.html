@@ -535,38 +535,7 @@ body {
 <!-- 掃描與相片 TAB -->
 
 <div v-if="currentTab === 'scan'" class="space-y-4">
-    <!-- 拍照手寫模擬區 -->
-    <div class="relative sketch-card p-6 overflow-hidden">
-        <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]">CAMERA ROLL</div>
-        <!-- 已拍照：顯示預覽 -->
-        <div v-if="scanPhoto" class="relative rounded-xl border-2 border-[#5c554a] overflow-hidden">
-            <img :src="scanPhoto" class="w-full max-h-64 object-contain bg-[#2a2825]" />
-            <button @click="clearScanPhoto"
-                class="absolute top-2 right-2 w-8 h-8 rounded-full sketch-btn flex items-center justify-center bg-white">
-                <i data-lucide="x" class="w-4 h-4 text-red-500"></i>
-            </button>
-        </div>
-        <!-- 未拍照 -->
-        <div v-else class="flex flex-col items-center space-y-3 text-center py-6">
-            <div class="w-16 h-16 rounded-full sketch-btn flex items-center justify-center text-[#5c554a]">
-                <i data-lucide="camera" class="w-8 h-8"></i>
-            </div>
-            <p class="text-xs text-[#8c8577] font-bold">拍張收據明細，夾在手帳裡對照記帳吧！</p>
-        </div>
-    </div>
-
-<!-- 拍照按鈕 -->
-
-<div class="grid grid-cols-2 gap-3">
-    <label class="flex items-center justify-center gap-2 py-2.5 sketch-btn text-xs font-bold cursor-pointer hover:bg-[#eae5da] transition-all">
-        <i data-lucide="camera" class="w-4 h-4"></i> 開啟快門
-        <input type="file" accept="image/*" capture="environment" class="hidden" @change="onScanPhotoSelected" />
-    </label>
-    <label class="flex items-center justify-center gap-2 py-2.5 sketch-btn text-xs font-bold cursor-pointer hover:bg-[#eae5da] transition-all">
-        <i data-lucide="image" class="w-4 h-4"></i> 翻閱相簿
-        <input type="file" accept="image/*" class="hidden" @change="onScanPhotoSelected" />
-    </label>
-</div>
+    
 
 <!-- 手寫對照表單 -->
 
@@ -674,10 +643,6 @@ body {
         </div>
         <template v-if="!isCategoryCollapsed(category)">
         <div v-for="item in group.items" :key="item.id" class="sketch-card overflow-hidden">
-    <img v-if="item.hasPhoto && expensePhotos[item.id]"
-        :src="expensePhotos[item.id]"
-        class="w-full h-28 object-cover border-b border-[#5c554a]/20 cursor-pointer"
-        @click="viewingPhoto = expensePhotos[item.id]" />
     <div class="flex justify-between items-center p-3">
         <div class="flex items-center space-x-3">
             <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-[#5c554a] bg-[#eae5da]/40 text-[#5c554a]">{{ item.payMethod }}</span>
@@ -694,27 +659,6 @@ body {
         </div>
     </div>
 </div>
-<!-- 照片全螢幕檢視 -->
-<div v-if="viewingPhoto" @click="viewingPhoto=null"
-    class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-pointer">
-    <img :src="viewingPhoto" class="max-w-full max-h-full rounded-xl object-contain shadow-2xl" />
-    <button class="absolute top-5 right-5 text-white text-2xl font-bold">✕</button>
-</div>
-
-            <div class="flex items-center space-x-3">
-                <span class="text-[10px] text-[#a8a297] font-bold">{{ item.date }}</span>
-                <div>
-                    <p class="text-sm font-bold text-[#4a463f]">{{ item.title }}</p>
-                    <span class="text-[9px] font-bold border border-[#5c554a]/30 px-1 rounded bg-[#eae5da]/10 text-[#8c8577]">{{ item.payMethod }}</span>
-                </div>
-            </div>
-            <div class="flex items-center space-x-3">
-                <span class="text-sm font-bold text-[#4a463f]">NT$ {{ formatNumber(item.amount) }}</span>
-                <button @click="deleteExpense(item.id)" class="text-[#a8a297] hover:text-red-500 transition-colors">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-            </div>
-        </div>
         </template>
     </div>
 </div>
@@ -907,6 +851,62 @@ body {
 <!-- 行前準備 (Checklist) -->
 
 <div v-if="resourceTab === 'checklist'" class="space-y-2.5">
+
+<!-- 行程住宿提醒 -->
+<div v-if="hotelItineraries.length > 0" class="sketch-card p-3.5 space-y-2">
+    <div class="flex justify-between items-center cursor-pointer select-none"
+         @click="hotelSectionCollapsed = !hotelSectionCollapsed">
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#eae5da]/50 border border-[#5c554a] text-[#5c554a]">🏨</span>
+            <span class="text-xs font-bold text-[#4a463f]">行程住宿提醒</span>
+            <span class="text-[10px] text-[#a8a297] font-bold">({{ hotelItineraries.length }})</span>
+        </div>
+        <i :data-lucide="hotelSectionCollapsed ? 'chevron-down' : 'chevron-up'" class="w-3.5 h-3.5 text-[#a8a297]"></i>
+    </div>
+    <div v-if="!hotelSectionCollapsed" class="space-y-1.5 pt-0.5">
+        <div v-for="item in hotelItineraries" :key="item.id"
+             class="flex items-center gap-3 border border-dashed border-[#5c554a]/40 rounded-xl p-2.5 bg-[#fdfcf9]">
+            <span class="text-base shrink-0">🏨</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
+                <div class="flex items-center gap-1.5 text-[10px] text-[#a8a297] font-bold mt-0.5 flex-wrap">
+                    <span>第 {{ item.day }} 天</span>
+                    <span v-if="tripInfo.startDate" class="text-[#8c8577]">({{ getShortDateByDay(item.day) }})</span>
+                    <span>⏱ {{ formatTimeShort(item.time) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PASS / 交通票券提醒 -->
+<div v-if="passItineraries.length > 0" class="sketch-card p-3.5 space-y-2">
+    <div class="flex justify-between items-center cursor-pointer select-none"
+         @click="passSectionCollapsed = !passSectionCollapsed">
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#eae5da]/50 border border-[#5c554a] text-[#5c554a]">🚉</span>
+            <span class="text-xs font-bold text-[#4a463f]">PASS / 交通票券提醒</span>
+            <span class="text-[10px] text-[#a8a297] font-bold">({{ passItineraries.length }})</span>
+        </div>
+        <i :data-lucide="passSectionCollapsed ? 'chevron-down' : 'chevron-up'" class="w-3.5 h-3.5 text-[#a8a297]"></i>
+    </div>
+    <div v-if="!passSectionCollapsed" class="space-y-1.5 pt-0.5">
+        <div v-for="item in passItineraries" :key="item.id"
+             class="flex items-center gap-3 border border-dashed border-[#5c554a]/40 rounded-xl p-2.5 bg-[#fdfcf9]">
+            <span class="text-base shrink-0">🚉</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
+                <div class="flex items-center gap-1.5 text-[10px] text-[#a8a297] font-bold mt-0.5 flex-wrap">
+                    <span>第 {{ item.day }} 天</span>
+                    <span v-if="tripInfo.startDate" class="text-[#8c8577]">({{ getShortDateByDay(item.day) }})</span>
+                    <span>⏱ {{ formatTimeShort(item.time) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
     <div v-for="(item, idx) in checklist" :key="item.id" 
          class="sketch-card p-3.5 flex justify-between items-center transition-all"
          :class="{'opacity-50 bg-[#f4f1ea]/40': item.checked}">
@@ -1880,6 +1880,7 @@ body {
                 localStorage.setItem(`${APP_ID}__trip_info`, JSON.stringify(tripInfo.value));
                 tripInfoModal.value = false;
                 showToast('手帳封面已重新設定');
+                saveToStorage();
             };
             const tripDuration = computed(() => {
                 if (!tripInfo.value.startDate || !tripInfo.value.endDate) return '';
@@ -2079,14 +2080,14 @@ const viewingPhoto = ref(null);
                 return filteredGroups;
             });
 
-            const filteredItineraries = computed(() => {
+           const filteredItineraries = computed(() => {
                 return [...itineraries.value]
                     .filter(item => item.day === selectedDay.value)
                     .sort((a, b) => {
                         const oa = a.sortOrder ?? 9999;
                         const ob = b.sortOrder ?? 9999;
                         if (oa !== ob) return oa - ob;
-                        return a.time.localeCompare(b.time);
+                        return String(a.time || '').localeCompare(String(b.time || ''));
                     });
             });
 
@@ -2099,7 +2100,7 @@ const viewingPhoto = ref(null);
                         const oa = a.sortOrder ?? 9999;
                         const ob = b.sortOrder ?? 9999;
                         if (oa !== ob) return oa - ob;
-                        return a.time.localeCompare(b.time);
+                        return String(a.time || '').localeCompare(String(b.time || ''));
                     });
             };
 
@@ -2110,7 +2111,7 @@ const viewingPhoto = ref(null);
                         const oa = a.sortOrder ?? 9999;
                         const ob = b.sortOrder ?? 9999;
                         if (oa !== ob) return oa - ob;
-                        return a.time.localeCompare(b.time);
+                        return String(a.time || '').localeCompare(String(b.time || ''));
                     });
                 const idx = dayItems.findIndex(i => i.id === id);
                 const swapIdx = idx + dir;
@@ -2356,6 +2357,32 @@ const viewingPhoto = ref(null);
             };
 
 
+// ── Issues 4-6: 行程住宿 / PASS 提醒 ──
+const hotelSectionCollapsed = ref(false);
+const passSectionCollapsed = ref(false);
+
+const hotelItineraries = computed(() =>
+    [...itineraries.value]
+        .filter(item => item.type && String(item.type).toLowerCase() === 'hotel')
+        .sort((a, b) => a.day !== b.day ? a.day - b.day : String(a.time || '').localeCompare(String(b.time || '')))
+);
+
+const passItineraries = computed(() =>
+    [...itineraries.value]
+        .filter(item => item.type && String(item.type).toLowerCase() === 'pass')
+        .sort((a, b) => a.day !== b.day ? a.day - b.day : String(a.time || '').localeCompare(String(b.time || '')))
+);
+const getShortDateByDay = (day) => {
+    if (!tripInfo.value.startDate) return '';
+    const baseDate = new Date(tripInfo.value.startDate);
+    baseDate.setDate(baseDate.getDate() + (day - 1));
+    const month = String(baseDate.getMonth() + 1).padStart(2, '0');
+    const date = String(baseDate.getDate()).padStart(2, '0');
+    const weekDay = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'][baseDate.getDay()];
+    return `${month}/${date} ${weekDay}`;
+};
+
+
             const showToast = (msg) => {
                 toast.value.message = msg;
                 toast.value.show = true;
@@ -2382,7 +2409,7 @@ const viewingPhoto = ref(null);
                 _st=setTimeout(async()=>{
                     if(!window._uid){ window._saving=false; return; }
                     try{
-                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,updatedAt:pendingTs});
+                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,trip_info:tripInfo.value,updatedAt:pendingTs});
                     }
                     catch(e){console.warn('Firestore 同步手帳失敗',e);}
                     finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
@@ -2404,6 +2431,7 @@ const viewingPhoto = ref(null);
                         resources: resources.value,
                         checklist: checklist.value,
                         day_highlights: dayHighlights,
+                        trip_info: tripInfo.value,
                         bookings: bookings.value,
                         map_pins: mapPins.value,
                         backup_labels: backupDayLabels.value,
@@ -2706,23 +2734,16 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
 
             const clearScanPhoto = () => { scanPhoto.value = null; };
 
-            const submitScanExpense = async () => {
+            const submitScanExpense = () => {
     if (!scanForm.value.amount || !scanForm.value.title) {
         showToast('請填妥明細名稱與金額'); return;
     }
     const id = Date.now();
-    if (scanPhoto.value) {
-        const compressed = await compressPhoto(scanPhoto.value);
-        expensePhotos[id] = compressed;
-        localStorage.setItem(`${APP_ID}__expense_photos`, JSON.stringify(expensePhotos));
-    }
     expenses.value.unshift({
         id, ...scanForm.value,
-        amount: Number(scanForm.value.amount),
-        hasPhoto: !!scanPhoto.value
+        amount: Number(scanForm.value.amount)
     });
     saveToStorage();
-    scanPhoto.value = null;
     scanForm.value = {
         title: '', amount: null,
         date: new Date().toISOString().split('T')[0],
@@ -2731,6 +2752,7 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
     };
     showToast('收據帳目已成功登打');
 };
+
 
             const simulateScan = () => {};
 
@@ -2934,7 +2956,7 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
 
             const _loadCloud = (d) => {
                 if(!d)return;
-                if(window._saving)return; // 本地正在儲存中，不覆蓋
+                if(window._saving)return;
                 if(d.categories)categories.value=d.categories;
                 if(d.paymethods)payMethods.value=d.paymethods;
                 if(d.budgets){ Object.keys(categoryBudgets).forEach(k=>delete categoryBudgets[k]); Object.assign(categoryBudgets,d.budgets); }
@@ -2945,8 +2967,10 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                 if(d.bookings)bookings.value=d.bookings;
                 if(d.map_pins)mapPins.value=d.map_pins;
                 if(d.day_highlights){ Object.keys(dayHighlights).forEach(k=>delete dayHighlights[k]); Object.assign(dayHighlights,d.day_highlights); }
+                if(d.trip_info){ tripInfo.value=d.trip_info; localStorage.setItem(`${APP_ID}__trip_info`,JSON.stringify(d.trip_info)); }
                 nextTick(()=>lucide.createIcons());
             };
+
             onMounted(() => {
                 lucide.createIcons();
                 fetchExchangeRates();
@@ -2995,7 +3019,7 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                 dayHighlights, getDayHighlight, setDayHighlight,
                 formatTimeShort, budgetsCollapsed, collapsedCategories, isCategoryCollapsed, toggleCategoryCollapse,
                 expandedItineraryIds, isItineraryExpanded, toggleItineraryExpand,
-                exportAllData, importAllData
+                exportAllData, importAllData,hotelSectionCollapsed, passSectionCollapsed,hotelItineraries, passItineraries, getShortDateByDay
             };
 
         }
