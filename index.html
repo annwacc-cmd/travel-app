@@ -785,8 +785,14 @@ body {
             <i :data-lucide="isMapPinned(item.id) ? 'map-pin' : 'map-pin-off'" class="w-3.5 h-3.5"></i>
             {{ isMapPinned(item.id) ? '已標記' : '加入地圖' }}
         </button>
-        <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank"
+       <!-- 📍 定位 (藍色, 地圖大頭針圖示) -->
+        <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank" title="Google 定位"
             class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-[#5c554a]/30 text-blue-500/80 hover:text-blue-700 hover:bg-blue-50 transition-colors">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+        </a>
+        <!-- 🗺 導航 (綠色, 箭頭導航圖示) -->
+        <a v-if="item.nav && item.nav.startsWith('http')" :href="item.nav" target="_blank" title="Google 導航"
+            class="w-8 h-8 shrink-0 flex items-center justify-center rounded-lg border border-[#5c554a]/30 text-green-600/80 hover:text-green-700 hover:bg-green-50 transition-colors">
             <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
         </a>
     </div>
@@ -1347,8 +1353,8 @@ body {
 
 <!-- Itinerary Modal -->
 
-<div v-if="itineraryModal.isOpen" class="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center z-[1001]" @click.self="itineraryModal.isOpen = false">
-    <div class="bg-[#fffdf9] w-full rounded-t-3xl p-6 space-y-4 border-t-2 border-[#5c554a] shadow-xl max-h-[85%] overflow-y-auto no-scrollbar relative">
+<div v-if="itineraryModal.isOpen" class="fixed inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center z-[1001] px-4" @click.self="itineraryModal.isOpen = false">
+    <div class="bg-[#fffdf9] w-full max-w-md rounded-3xl p-6 space-y-4 border-2 border-[#5c554a] shadow-xl max-h-[85vh] overflow-y-auto no-scrollbar relative">
         <div class="absolute -top-3 left-1/3 right-1/3 h-5 paper-tape text-center text-[10px] font-bold text-[#5c554a]/60">ITINERARY</div>
         <div class="flex justify-between items-center">
             <h3 class="text-sm font-bold text-[#4a463f]">{{ itineraryModal.isEdit ? '✏️ 編輯手記節點' : '✎ 新增手記節點' }}</h3>
@@ -1374,10 +1380,17 @@ body {
                 <input type="text" v-model="itineraryForm.type" class="w-full sketch-input p-2 text-sm focus:outline-none">
             </div>
         </div>
-       <div>
-            <label class="text-[10px] text-[#a8a297] font-bold block mb-1">🗺 導航連結 (Google Maps 路線)</label>
-            <input type="url" v-model="itineraryForm.nav" placeholder="https://www.google.com/maps/dir/..."
-                class="w-full sketch-input p-2 text-sm focus:outline-none">
+       <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-[10px] text-[#a8a297] font-bold block mb-1">📍 定位連結 (Google Maps 景點)</label>
+                <input type="url" v-model="itineraryForm.google" placeholder="https://maps.app.goo.gl/..."
+                    class="w-full sketch-input p-2 text-sm focus:outline-none">
+            </div>
+            <div>
+                <label class="text-[10px] text-[#a8a297] font-bold block mb-1">🗺 導航連結 (Google Maps 路線)</label>
+                <input type="url" v-model="itineraryForm.nav" placeholder="https://www.google.com/maps/dir/..."
+                    class="w-full sketch-input p-2 text-sm focus:outline-none">
+            </div>
         </div>
         <div>
             <label class="text-[10px] text-[#a8a297] font-bold block mb-1">交通配置描述</label>
@@ -2204,16 +2217,18 @@ const viewingPhoto = ref(null);
                 const dayItems = itineraries.value.filter(i => i.day === day);
                 const maxOrder = dayItems.length ? Math.max(...dayItems.map(i => i.sortOrder ?? 0)) + 10 : 0;
                 itineraries.value.push({
-                    id: Date.now(),
-                    day,
-                    time: src.time,
-                    type: src.type,
-                    title: src.title,
-                    transport: src.transport,
-                    google: src.google,
-                    note: src.note,
-                    sortOrder: maxOrder
-                });
+    id: Date.now(),
+    day,
+    time: src.time,
+    type: src.type,
+    title: src.title,
+    transport: src.transport,
+    google: src.google,
+    nav: src.nav,
+    note: src.note,
+    sortOrder: maxOrder
+});
+
                 saveToStorage();
                 addToSchedulePicker.value.isOpen = false;
                 showToast(`「${src.title}」已錄入正式手帳`);
@@ -2757,9 +2772,10 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
             const simulateScan = () => {};
 
             const openAddItineraryModal = () => {
-                itineraryForm.value = { day: selectedDay.value, time: '12:00:00', type: 'spot', title: '', transport: '', google: '', note: '' };
-                itineraryModal.value = { isOpen: true, isEdit: false, currentId: null };
-            };
+    itineraryForm.value = { day: selectedDay.value, time: '12:00:00', type: 'spot', title: '', transport: '', google: '', nav: '', note: '' };
+    itineraryModal.value = { isOpen: true, isEdit: false, currentId: null };
+};
+
             const openEditItineraryModal = (item) => {
                 itineraryForm.value = { ...item };
                 itineraryModal.value = { isOpen: true, isEdit: true, currentId: item.id };
@@ -2823,16 +2839,22 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
 
             const backupDayMap = { '備案手帳一': 27, '備案手帳二': 28, '備案手帳三': 29, '備案手帳四': 30, '備案手帳五': 31 };
             const dateStrToDay = (d) => {
-                if (!d) return null;
-                const s = String(d).trim();
-                if (backupDayMap[s] !== undefined) return backupDayMap[s];
-                const m = s.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
-                if (!m) return null;
-                const base = new Date(tripInfo.value.startDate || '2027-03-15');
-                const dt = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
-                const diff = Math.round((dt - base) / 86400000) + 1;
-                return diff >= 1 ? diff : null;
-            };
+    if (!d) return null;
+    const s = String(d).trim();
+    if (backupDayMap[s] !== undefined) return backupDayMap[s];
+    // ✅ 直接數字天數 (Excel 填 1, 2, 3...)
+    if (/^\d{1,2}$/.test(s)) {
+        const n = parseInt(s);
+        if (n >= 1 && n <= 31) return n;
+    }
+    const m = s.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+    if (!m) return null;
+    const base = new Date(tripInfo.value.startDate || '2027-03-15');
+    const dt = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]));
+    const diff = Math.round((dt - base) / 86400000) + 1;
+    return diff >= 1 ? diff : null;
+};
+
 
             const safe = (v) => {
                 if (v === null || v === undefined) return '';
@@ -2860,9 +2882,10 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                     }
                     const headers = raw[headerRow].map(c => String(c).toLowerCase().trim());
                     const col = (name) => headers.findIndex(h => h === name || h.includes(name));
-                    const iDay = col('day'), iTime = col('time'), iType = col('type'),
+                     const iDay = col('day'), iTime = col('time'), iType = col('type'),
                           iTitle = col('title'), iTransport = col('transport'),
-                          iGoogle = col('google'), iNote = col('note');
+                          iGoogle = col('google'), iNav = col('nav'), iNote = col('note'),
+                          iTransportDesc = headers.findIndex(h => h.includes('配置') || (h.includes('交通') && !h.includes('transport')));
 
                     if (iDay === -1 || iTitle === -1) {
                         showToast('未偵測到 day 或 title 屬性標題');
@@ -2877,16 +2900,20 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                         if (!dayNum) continue;
                         const title = iTitle >= 0 ? safe(r[iTitle]) : '';
                         if (!title) continue;
+                        const rawTrans = iTransport >= 0 ? safe(r[iTransport]) : '';
+                        const isNavUrl = rawTrans.startsWith('http');
                         rows.push({
                             id: idSeq++,
                             day: dayNum,
                             time: iTime >= 0 ? fracToTime(r[iTime]) : '12:00:00',
                             type: iType >= 0 ? safe(r[iType]) : '',
                             title,
-                            transport: iTransport >= 0 ? safe(r[iTransport]) : '',
+                            transport: iTransportDesc >= 0 ? safe(r[iTransportDesc]) : (isNavUrl ? '' : rawTrans),
                             google: iGoogle >= 0 ? safe(r[iGoogle]) : '',
+                            nav: iNav >= 0 ? safe(r[iNav]) : (isNavUrl ? rawTrans : ''),
                             note: iNote >= 0 ? safe(r[iNote]) : '',
                         });
+
                     }
 
                     if (!rows.length) { showToast('未解析出有效手帳節點'); return; }
