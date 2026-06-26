@@ -77,39 +77,67 @@
     window._fsWatch = (uid,id,cb) => onSnapshot(doc(_db,'shared','data','apps',id), s => s.exists()&&cb(s.data()));
 
     // ─── 行程管理 ───
-    const TRIPS_KEY = (uid) => `trips_meta_${uid}`;
-    const _getTrips = async (uid) => { const d = await window._fsGet(uid, TRIPS_KEY(uid)); return d ? (d.trips || []) : []; };
-    const _saveTrips = async (uid, trips) => window._fsSave(uid, TRIPS_KEY(uid), { trips });
+    const TRIPS_DOC = 'trips_meta_shared'; // ← 所有帳號共用同一份清單
+const _getTrips = async () => { const d = await window._fsGet(null, TRIPS_DOC); return d ? (d.trips || []) : []; };
+const _saveTrips = async (trips) => window._fsSave(null, TRIPS_DOC, { trips });
 
-    window.renderTripList = async (uid) => {
+    // 用於記錄即時監聽器，避免重複執行導致記憶體佔用
+    let _tripListUnsubscribe = null;
+
+    window.renderTripList = (uid) => {
         const list = document.getElementById('trips-list');
         const err = document.getElementById('trips-error');
         list.innerHTML = '<p class="text-xs text-[#a8a297] text-center font-bold animate-pulse py-4">載入中...</p>';
-        try {
-            const trips = await _getTrips(uid);
-// ✅ 自動遷移：偵測舊資料 sabi_trip_Kyushu
+
+        // 如果之前已經有監聽器，先清除掉
+        if (_tripListUnsubscribe) _tripListUnsubscribe();
+
+        // 改用 onSnapshot 即時監聽雲端資料變化 (只要手機一新增，電腦畫面會瞬間自動出現)
+        _tripListUnsubscribe = onSnapshot(doc(_db, 'shared', 'data', 'apps', TRIPS_DOC), async (snapshot) => {
+    try {
+        let trips = snapshot.exists() ? (snapshot.data().trips || []) : [];
+
+        // ✅ 一次性遷移：將每個帳號的舊清單合併進共用清單
+        const oldMeta = await window._fsGet(uid, `trips_meta_${uid}`);
+        if (oldMeta && oldMeta.trips) {
+            let changed = false;
+            oldMeta.trips.forEach(t => {
+                if (!trips.some(s => s.id === t.id)) { trips.push(t); changed = true; }
+            });
+            if (changed) { await _saveTrips(trips); return; }
+        }
+
+        // ✅ 自動遷移：偵測舊資料 sabi_trip_Kyushu
         if (!trips.some(t => t.id === 'sabi_trip_Kyushu')) {
             const oldData = await window._fsGet(uid, 'sabi_trip_Kyushu');
             if (oldData) {
                 trips.push({ id: 'sabi_trip_Kyushu', name: '九州之旅', createdAt: Date.now() });
-                await _saveTrips(uid, trips);
-            }
-        }
-            if (!trips.length) {
-                list.innerHTML = '<p class="text-xs text-[#a8a297] text-center font-bold py-4">尚無行程，請建立第一本手帳 ↓</p>';
+                await _saveTrips(trips);
                 return;
             }
-            list.innerHTML = trips.map(t => `
-                <div class="flex items-center gap-2">
-                    <button onclick="selectTrip('${t.id}')"
-                        class="flex-1 text-left px-4 py-2.5 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da] transition-all">
-                        📒 ${t.name}
-                    </button>
-                    <button onclick="deleteTrip('${t.id}','${t.name.replace(/'/g,"\\'")}')"
-                        class="w-8 h-8 flex items-center justify-center sketch-btn text-red-400 shrink-0 text-sm" title="刪除">✕</button>
-                </div>
-            `).join('');
-        } catch(e) { err.textContent = '載入失敗：' + e.message; }
+        }
+
+
+                if (!trips.length) {
+                    list.innerHTML = '<p class="text-xs text-[#a8a297] text-center font-bold py-4">尚無行程，請建立第一本手帳 ↓</p>';
+                    return;
+                }
+
+                // 將行程清單渲染到畫面上 (新建立的會排在下面)
+                list.innerHTML = trips.map(t => `
+                    <div class="flex items-center gap-2">
+                        <button onclick="selectTrip('${t.id}')"
+                            class="flex-1 text-left px-4 py-2.5 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da] transition-all">
+                            📒 ${t.name}
+                        </button>
+                        <button onclick="deleteTrip('${t.id}','${t.name.replace(/'/g,"\\'")}')"
+                            class="w-8 h-8 flex items-center justify-center sketch-btn text-red-400 shrink-0 text-sm" title="刪除">✕</button>
+                    </div>
+                `).join('');
+            } catch(e) { 
+                err.textContent = '載入失敗：' + e.message; 
+            }
+        });
     };
 
     window.selectTrip = (tripId) => { sessionStorage.setItem('current_trip_id', tripId); location.reload(); };
@@ -121,10 +149,11 @@
         err.textContent = '';
         if (!name) { err.textContent = '請輸入行程名稱'; return; }
         try {
-            const trips = await _getTrips(window._uid);
-            if (trips.length >= 20) { err.textContent = '行程數量已達上限（20 本）'; return; }
-            trips.push({ id: 'trip_' + Date.now(), name, createdAt: Date.now() });
-            await _saveTrips(window._uid, trips);
+            const trips = await _getTrips();
+if (trips.length >= 20) { err.textContent = '行程數量已達上限（20 本）'; return; }
+trips.push({ id: 'trip_' + Date.now(), name, createdAt: Date.now() });
+await _saveTrips(trips);
+
             input.value = '';
             await window.renderTripList(window._uid);
         } catch(e) { err.textContent = '建立失敗：' + e.message; }
@@ -136,8 +165,8 @@
         err.textContent = '';
         try {
             await deleteDoc(doc(_db, 'shared', 'data', 'apps', tripId));
-            const trips = await _getTrips(window._uid);
-            await _saveTrips(window._uid, trips.filter(t => t.id !== tripId));
+            const trips = await _getTrips();
+await _saveTrips(trips.filter(t => t.id !== tripId));
             if (sessionStorage.getItem('current_trip_id') === tripId) sessionStorage.removeItem('current_trip_id');
             await window.renderTripList(window._uid);
         } catch(e) { err.textContent = '刪除失敗：' + e.message; }
@@ -814,7 +843,7 @@ body {
 <div v-if="currentTab === 'resources'" class="space-y-4">
     <div class="space-y-1">
         <div class="flex sketch-input p-1 text-[11px] font-bold gap-0.5">
-            <button @click="switchResourceSubTab('japanese')" :class="{'highlight-yellow text-[#4a463f]': resourceTab === 'japanese'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">實用日語</button>
+            <button @click="switchResourceSubTab('japanese')" :class="{'highlight-yellow text-[#4a463f]': resourceTab === 'japanese'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">實用例句</button>
             <button @click="switchResourceSubTab('checklist')" :class="{'highlight-yellow text-[#4a463f]': resourceTab === 'checklist'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">行前準備</button>
             <button @click="switchResourceSubTab('emergency')" :class="{'highlight-yellow text-[#4a463f]': resourceTab === 'emergency'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">緊急應對</button>
             <button @click="switchResourceSubTab('backup')" :class="{'highlight-yellow text-[#4a463f]': resourceTab === 'backup'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">備案行程</button>
@@ -1415,10 +1444,10 @@ body {
             <h3 class="text-sm font-bold text-[#4a463f]">{{ resourceModal.isEdit ? '✏️ 編輯備忘' : '✎ 新增備忘' }}</h3>
             <button @click="resourceModal.isOpen = false" class="text-[#a8a297] hover:text-[#4a463f]"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
-        <div>
+       <div>
             <label class="text-[10px] text-[#a8a297] font-bold block mb-1">備忘類別</label>
             <select v-model="resourceForm.type" class="w-full sketch-input p-2 text-sm focus:outline-none">
-                <option value="japanese">旅遊實用日語</option>
+                <option value="japanese">實用例句</option>
                 <option value="emergency">緊急應對手冊</option>
             </select>
         </div>
