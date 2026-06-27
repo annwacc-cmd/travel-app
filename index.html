@@ -2575,29 +2575,83 @@ const getShortDateByDay = (day) => {
             let leafletMap = null;
             let leafletMarkers = [];
 
-            const extractSearchQuery = (item) => {
-                if (item.google && item.google.startsWith('http')) {
+            // 新版解析邏輯：優先抓取精確經緯度座標
+           // 新版解析邏輯：支援更多 Google 網址格式，並支援直接輸入經緯度
+            const extractLocationData = (item) => {
+                let result = { query: item.title, lat: null, lng: null };
+                const urlStr = (item.google || '').trim();
+
+                if (!urlStr) return result;
+
+                // 0. 終極絕招：如果使用者直接在網址欄位貼上「經緯度」(如 33.5932, 130.3514)
+                const coordMatch = urlStr.match(/^(-?\d+\.\d+)[\s,]+(-?\d+\.\d+)$/);
+                if (coordMatch) {
+                    result.lat = parseFloat(coordMatch[1]);
+                    result.lng = parseFloat(coordMatch[2]);
+                    return result;
+                }
+
+                if (urlStr.startsWith('http')) {
                     try {
-                        const url = new URL(item.google);
+                        const url = new URL(urlStr);
+
+                        // 1. 抓取 /@lat,lng 格式
+                        const matchAt = urlStr.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+                        if (matchAt) {
+                            result.lat = parseFloat(matchAt[1]);
+                            result.lng = parseFloat(matchAt[2]);
+                            return result;
+                        }
+
+                        // 2. 抓取 !3d 緯度 !4d 經度 格式 (常見於分享網址)
+                        const match3d4d = urlStr.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+                        if (match3d4d) {
+                            result.lat = parseFloat(match3d4d[1]);
+                            result.lng = parseFloat(match3d4d[2]);
+                            return result;
+                        }
+
+                        // 3. 抓取 ll= 或 query= 參數
+                        const ll = url.searchParams.get('ll') || url.searchParams.get('query');
+                        if (ll && ll.includes(',')) {
+                            const parts = ll.split(',');
+                            if (!isNaN(parts[0]) && !isNaN(parts[1])) {
+                                result.lat = parseFloat(parts[0]);
+                                result.lng = parseFloat(parts[1]);
+                                return result;
+                            }
+                        }
+
+                        // 4. 抓不到座標時，嘗試提取地名
                         if (url.pathname.includes('/maps/place/')) {
                             const raw = url.pathname.split('/maps/place/')[1].split('/')[0];
-                            return decodeURIComponent(raw).replace(/\+/g, ' ');
+                            result.query = decodeURIComponent(raw).replace(/\+/g, ' ');
+                        } else {
+                            const q = url.searchParams.get('q');
+                            if (q) result.query = q;
                         }
-                        const q = url.searchParams.get('q');
-                        if (q) return q;
                     } catch(e) {}
                 }
-                return item.title;
+                return result;
             };
 
             const geocodeItems = async (items) => {
                 mapGeocoding.value = true;
                 for (const item of items) {
                     if (mapCoords[item.id]) continue;
-                    const query = extractSearchQuery(item);
+                    
+                    const locData = extractLocationData(item);
+
+                    // 情況 A：成功解析到精確經緯度，直接定位！
+                    if (locData.lat !== null && locData.lng !== null) {
+                        mapCoords[item.id] = { lat: locData.lat, lng: locData.lng, name: item.title };
+                        continue;
+                    }
+
+                    // 情況 B：純文字搜尋 (使用免費的 OSM 圖資)
                     try {
                         const res = await fetch(
-                            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`,
+                            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(locData.query)}`,
                             { headers: { 'Accept-Language': 'zh-TW,zh', 'User-Agent': 'TravelApp/1.0' } }
                         );
                         const data = await res.json();
@@ -2609,7 +2663,7 @@ const getShortDateByDay = (day) => {
                     } catch(e) {
                         mapGeoFailed[item.id] = true;
                     }
-                    await new Promise(r => setTimeout(r, 300));
+                    await new Promise(r => setTimeout(r, 400)); // 稍微拉長一點延遲避免被 OSM 封鎖
                 }
                 mapGeocoding.value = false;
                 await nextTick();
