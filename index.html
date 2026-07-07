@@ -14,6 +14,7 @@
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-analytics.js";
     import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-auth.js";
     import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+import { getStorage, ref as _storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-storage.js";
 
     const ALLOWED = ["annwei.acc@gmail.com","chenyc0615@gmail.com"];
     const _app = initializeApp({apiKey:"AIzaSyCDOPCY04DR7HqNsMjIVSUDGkP83F6Z4Ws",authDomain:"travel-app-f5a47.firebaseapp.com",projectId:"travel-app-f5a47",storageBucket:"travel-app-f5a47.firebasestorage.app",messagingSenderId:"318106369100",appId:"1:318106369100:web:3e561384390ff411b288e9",measurementId:"G-FM7E9T3DF2"});
@@ -26,6 +27,16 @@
             tabManager: persistentMultipleTabManager()
         })
     });
+// ✅ Firebase Storage：圖片改存這裡，Firestore 只存網址
+    const _storage = getStorage(_app);
+    window._storageUpload = async (path, file) => {
+        const r = _storageRef(_storage, path);
+        await uploadBytes(r, file);
+        return getDownloadURL(r);
+    };
+    window._storageDelete = async (path) => {
+        try { await deleteObject(_storageRef(_storage, path)); } catch (e) { /* 檔案可能已不存在，忽略即可 */ }
+    };
 
     onAuthStateChanged(_auth, u => {
         const ls = document.getElementById('login-screen');
@@ -564,6 +575,51 @@ body {
 <!-- 掃描與相片 TAB -->
 
 <div v-if="currentTab === 'scan'" class="space-y-4">
+
+<!-- 收據相片／即時拍照 -->
+<div v-if="isCameraActive" class="relative bg-black rounded-2xl overflow-hidden aspect-[4/3] flex flex-col justify-between border-2 border-[#5c554a]">
+    <video id="camera-feed" autoplay playsinline class="w-full h-full object-cover"></video>
+    <div class="absolute bottom-4 left-0 right-0 flex justify-around items-center px-6 z-10">
+        <button @click="stopCamera" class="w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center backdrop-blur-md">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        <button @click="capturePhoto" class="w-16 h-16 rounded-full border-4 border-white bg-red-500/80 hover:bg-red-600 active:scale-95 transition-all flex items-center justify-center">
+            <span class="w-8 h-8 rounded-full bg-white block"></span>
+        </button>
+        <button @click="switchCamera" class="w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center backdrop-blur-md">
+            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+        </button>
+    </div>
+</div>
+
+<div v-else class="sketch-card p-4 space-y-3">
+    <div class="relative bg-[#fdfcf9] rounded-xl border border-[#5c554a]/20 overflow-hidden" :class="scanPhoto ? 'p-0' : 'p-8'">
+        <div v-if="scanPhoto" class="relative">
+            <img :src="scanPhoto" class="w-full max-h-72 object-contain bg-[#2a2825] block mx-auto rounded-xl" />
+            <button @click="clearScanPhoto" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors z-10">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        <div v-else class="flex flex-col items-center space-y-3 text-center">
+            <div class="w-16 h-16 rounded-full bg-[#eae5da] flex items-center justify-center text-[#8c8577]">
+                <i data-lucide="camera" class="w-8 h-8"></i>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-[#4a463f]">拍攝收據或上傳照片</p>
+                <p class="text-[10px] text-[#a8a297] font-bold mt-1">照片會跟這筆開銷一起保存</p>
+            </div>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-2">
+        <button @click="startCamera" class="flex items-center justify-center gap-2 py-3 sketch-btn text-xs font-bold text-[#4a463f]">
+            <i data-lucide="camera" class="w-4 h-4"></i> 開啟相機
+        </button>
+        <button @click="triggerFileInput" class="flex items-center justify-center gap-2 py-3 sketch-btn text-xs font-bold text-[#4a463f]">
+            <i data-lucide="image" class="w-4 h-4"></i> 選擇照片
+        </button>
+        <input type="file" id="scan-file-upload-input" accept="image/*" class="hidden" @change="onScanPhotoSelected" />
+    </div>
+</div>
     
 
 <!-- 手寫對照表單 -->
@@ -571,6 +627,10 @@ body {
 <div class="sketch-card p-5 space-y-4">
     <p class="text-xs font-bold text-[#8c8577] uppercase border-b-2 border-dashed border-[#5c554a]/30 pb-1.5">✍️ 照著收據謄寫上來</p>
 
+<div v-if="scanPhoto" class="flex items-center gap-2 bg-[#eae5da]/60 border border-[#5c554a]/20 rounded-xl p-2.5 text-xs font-bold text-[#736c60]">
+    <i data-lucide="check-circle" class="w-4 h-4 shrink-0 text-[#5c7a4a]"></i>
+    <span>已偵測到相片！這筆帳目將會一併儲存這張照片。</span>
+</div>
 
 <div>
     <label class="text-[10px] text-[#a8a297] font-bold block mb-1">金額</label>
@@ -610,7 +670,7 @@ body {
 
 <button @click="submitScanExpense"
     class="w-full py-3 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da] transition-all">
-    ✎ 寫入今日帳目
+    ✎ 寫入今日帳目（含相片）
 </button>
 
 
@@ -743,6 +803,40 @@ body {
     <span>📅 日期對應：{{ getTargetDateByDay(selectedDay) }}</span>
     <span>共 {{ filteredItineraries.length }} 處漫遊節點</span>
 </div>
+<!-- 未來三天天氣預報 -->
+<div class="sketch-card p-4 relative">
+    <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">3-DAY WEATHER</div>
+    <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2 text-xs font-bold text-[#4a463f]">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-[#a8a297]"></i>
+            <span>{{ weatherCity || weatherCityInput || '尚未設定地點' }}</span>
+        </div>
+        <span v-if="dayWeatherLoading" class="text-[10px] text-[#a8a297] font-bold animate-pulse">氣象載入中...</span>
+    </div>
+    <div v-if="!weatherCityInput" class="text-[10px] text-[#a8a297] font-bold mt-1">
+        請先於「首頁」天氣區塊設定城市，即可顯示每日天氣
+    </div>
+    <div v-else-if="dayWeatherError" class="text-[10px] text-red-500 font-bold mt-1">{{ dayWeatherError }}</div>
+    <div v-else class="grid grid-cols-3 gap-2 mt-2">
+        <div v-for="(d, i) in [selectedDay, selectedDay + 1, selectedDay + 2]" :key="d"
+             :class="i === 0 ? 'ring-2 ring-[#8fa87c]/50' : ''"
+             class="bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20 text-center space-y-1">
+            <div class="text-[10px] font-bold text-[#a8a297]">{{ getShortDateLabel(d) }}</div>
+            <template v-if="dayWeatherCache[d] && dayWeatherCache[d].outOfRange">
+                <div class="text-[9px] text-[#a8a297] font-bold leading-tight py-2">超出<br>預報範圍</div>
+            </template>
+            <template v-else-if="dayWeatherCache[d]">
+                <i :data-lucide="getWeatherIcon(dayWeatherCache[d].condition)" class="w-5 h-5 mx-auto text-[#5c554a]"></i>
+                <div class="text-xs font-bold text-[#4a463f]">{{ dayWeatherCache[d].tempRange }}</div>
+                <div class="text-[9px] text-[#a8a297] font-bold">☂ {{ dayWeatherCache[d].pop }}</div>
+            </template>
+            <template v-else>
+                <div class="text-[9px] text-[#a8a297] font-bold py-2">－</div>
+            </template>
+        </div>
+    </div>
+</div>
+    
 
 <!-- 每日重點輸入框 -->
 
@@ -760,12 +854,46 @@ body {
         class="w-full sketch-input px-3 py-2 text-xs text-[#4a463f] placeholder-[#c4beaf] focus:outline-none resize-none leading-relaxed"
     ></textarea>
 </div>
+
+<!-- 當日景點照片相簿 -->
+<div class="sketch-card p-4 space-y-2 relative">
+    <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">DAY PHOTOS</div>
+    <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2">
+            <span class="text-base select-none shrink-0">📷</span>
+            <label class="text-[11px] font-bold text-[#8c8577] uppercase tracking-widest shrink-0">當日景點照片</label>
+        </div>
+        <label class="flex items-center gap-1 text-[10px] font-bold text-[#5c554a] px-2 py-1 border border-[#5c554a]/40 rounded-md cursor-pointer hover:bg-[#eae5da]/50 shrink-0">
+            <i data-lucide="image-plus" class="w-3.5 h-3.5"></i>{{ dayPhotoUploading ? '上傳中...' : '新增照片' }}
+            <input type="file" accept="image/*" multiple class="hidden" :disabled="dayPhotoUploading" @change="onDayPhotoSelected($event, selectedDay)" />
+        </label>
+    </div>
+    <div v-if="!(dayPhotos[selectedDay] && dayPhotos[selectedDay].length)" class="text-[10px] text-[#a8a297] font-bold">
+        尚未上傳這天的照片
+    </div>
+    <div v-else class="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        <div v-for="(p, pi) in dayPhotos[selectedDay]" :key="p.path"
+             class="relative shrink-0 w-28 h-28 rounded-xl overflow-hidden border-2 border-[#5c554a]">
+            <img :src="p.url" class="w-full h-full object-cover" />
+            <button @click="deleteDayPhoto(selectedDay, pi)"
+                class="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center text-white">
+                <i data-lucide="x" class="w-3 h-3"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
 <div class="space-y-4 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
-     <div v-for="(item, idx) in filteredItineraries" :key="item.id" class="sketch-card p-5 space-y-3 relative">
+     <div v-for="(item, idx) in filteredItineraries" :key="item.id"
+     :class="getItineraryTypeStyle(item.type).border"
+     class="sketch-card p-5 space-y-3 relative">
         <div class="flex justify-between items-start">
             <div class="flex items-center gap-2 cursor-pointer select-none" @click="idx > 0 && toggleItineraryExpand(item.id)">
                 <span class="text-xs font-mono bg-[#eae5da]/70 border border-[#5c554a]/50 text-[#5c554a] px-2 py-0.5 rounded-md font-bold">⏱ {{ formatTimeShort(item.time) }}</span>
-                <span v-if="item.type" class="text-[10px] border border-[#a8a297] text-[#a8a297] px-1.5 py-0.5 rounded-md uppercase font-bold">{{ item.type }}</span>
+               <span v-if="item.type" :class="getItineraryTypeStyle(item.type).badge"
+      class="flex items-center gap-1 text-[10px] border px-1.5 py-0.5 rounded-md font-bold">
+    <i :data-lucide="getItineraryTypeStyle(item.type).icon" class="w-3 h-3"></i>{{ item.type }}
+</span>
                 <i v-if="idx > 0" :data-lucide="isItineraryExpanded(item, idx) ? 'chevron-up' : 'chevron-down'" class="w-3.5 h-3.5 text-[#a8a297]"></i>
             </div>
             <div class="flex items-center space-x-2">
@@ -861,6 +989,127 @@ body {
         </div>
     </div>
 
+<!-- 緊急應對手冊自動產生器 -->
+<div v-if="resourceTab === 'emergency'" class="space-y-3">
+    <div class="sketch-card p-4 space-y-2 relative">
+        <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">SOS GUIDE</div>
+        <div class="flex gap-2 pt-1">
+            <input type="text" v-model="emergencyCityInput" @keyup.enter="generateEmergencyHandbook"
+                placeholder="輸入當地城市，如：大阪、首爾"
+                class="flex-1 sketch-input px-3 py-2 text-xs text-[#4a463f] placeholder-[#c4beaf] focus:outline-none">
+            <button @click="generateEmergencyHandbook" :disabled="emergencyLoading"
+                class="px-4 py-2 sketch-btn text-xs font-bold shrink-0">
+                <span v-if="emergencyLoading">產生中...</span>
+                <span v-else>📖 產生手冊</span>
+            </button>
+        </div>
+        <div v-if="emergencyError" class="text-[10px] text-red-500 font-bold px-1">{{ emergencyError }}</div>
+    </div>
+
+    <div v-if="emergencyInfo" class="space-y-3">
+        <!-- 緊急電話 -->
+        <div class="sketch-card p-4 space-y-2 border-l-4 border-l-red-400">
+            <h4 class="text-sm font-bold text-[#4a463f]">☎️ {{ emergencyInfo.country }}｜緊急電話</h4>
+            <div class="grid grid-cols-2 gap-2 text-xs font-bold text-[#736c60]">
+                <div class="bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20">🚓 警察：{{ emergencyInfo.police }}</div>
+                <div class="bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20">🚑 救護／消防：{{ emergencyInfo.ambulance }}</div>
+            </div>
+            <div class="bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20 text-xs font-bold text-[#736c60] leading-relaxed">
+                🇹🇼 台灣駐外辦事處：請至「外交部領事事務局」網站查詢當地館處電話（機場/領務局可索取通訊錄摺頁）<br>
+                無法聯繫駐外館處時，外交部緊急聯絡中心：<br>
+                國內免付費 0800-085-095｜海外撥打 (當地國際碼)+886-800-085-095<br>
+                全球免付費專線（限部分國家）：800-0885-0885<br>
+                手機通用緊急號碼（GSM，可定位就近救援）：112
+            </div>
+        </div>
+
+        <!-- 護照遺失 -->
+        <div class="sketch-card p-4 space-y-2 border-l-4 border-l-amber-400">
+            <h4 class="text-sm font-bold text-[#4a463f]">📕 護照遺失處理步驟</h4>
+            <ol class="text-xs font-bold text-[#736c60] space-y-1 list-decimal list-inside bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20">
+                <li>立即向當地警察局報案，索取「報案證明」（Police Report）</li>
+                <li>持報案證明聯繫台灣駐外館處，申請「入國證明書」或補發護照</li>
+                <li>備妥證件照、身分證影本加速辦理</li>
+                <li>返國後至外交部領事事務局申請正式護照補發</li>
+            </ol>
+        </div>
+
+        <!-- 信用卡盜刷 -->
+        <div class="sketch-card p-4 space-y-2 border-l-4 border-l-sky-400">
+            <h4 class="text-sm font-bold text-[#4a463f]">💳 信用卡被盜刷即時應對</h4>
+            <ol class="text-xs font-bold text-[#736c60] space-y-1 list-decimal list-inside bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20">
+                <li>立即撥打卡片背面的發卡銀行「海外緊急掛失專線」停卡</li>
+                <li>無法聯繫時可請台灣家人代撥銀行 24 小時客服掛失</li>
+                <li>向當地警察報案並保留報案證明，供銀行爭議款項申訴</li>
+                <li>確認其他卡片／行動支付是否也需暫停</li>
+            </ol>
+        </div>
+
+        <!-- 就醫建議 -->
+        <div class="sketch-card p-4 space-y-2 border-l-4 border-l-emerald-400">
+            <h4 class="text-sm font-bold text-[#4a463f]">🏥 突發生病或受傷就醫建議</h4>
+            <ol class="text-xs font-bold text-[#736c60] space-y-1 list-decimal list-inside bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20">
+                <li>情況緊急請直接撥打上方救護電話，或請飯店／店家協助叫車送醫</li>
+                <li>優先前往鄰近設有急診（Emergency/ER）的大型醫院</li>
+                <li>就醫時出示旅遊保險保單與護照，保留所有收據、診斷證明</li>
+                <li>返國後備齊單據，於保單規定期限內向保險公司申請理賠</li>
+            </ol>
+        </div>
+
+        <!-- 隨身文件清單 -->
+        <div class="sketch-card p-4 space-y-2 border-l-4 border-l-violet-400">
+            <h4 class="text-sm font-bold text-[#4a463f]">🎒 建議隨身攜帶文件清單</h4>
+            <ul class="text-xs font-bold text-[#736c60] grid grid-cols-2 gap-1.5 bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20">
+                <li>☐ 護照正本＋影本（分開存放）</li>
+                <li>☐ 護照用照片 1-2 張</li>
+                <li>☐ 旅遊保險保單影本</li>
+                <li>☐ 信用卡海外掛失電話清單</li>
+                <li>☐ 駐外館處緊急聯絡資訊</li>
+                <li>☐ 少量當地現金與備用卡</li>
+            </ul>
+        </div>
+
+        <p class="text-[9px] text-[#a8a297] text-center font-bold px-2">
+            ※ 手冊內容為一般性建議，實際辦理程序請以當地警察機關、駐外館處與發卡銀行公告為準
+        </p>
+    </div>
+</div>
+
+<!-- 實用例句自動產生器 -->
+<div v-if="resourceTab === 'japanese'" class="space-y-3">
+    <div class="sketch-card p-4 space-y-2 relative">
+        <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">PHRASEBOOK</div>
+        <div class="flex gap-2 pt-1">
+            <input type="text" v-model="phraseCityInput" @keyup.enter="generatePhrases"
+                placeholder="輸入國家或城市，如：日本、首爾"
+                class="flex-1 sketch-input px-3 py-2 text-xs text-[#4a463f] placeholder-[#c4beaf] focus:outline-none">
+            <button @click="generatePhrases" :disabled="phraseLoading"
+                class="px-4 py-2 sketch-btn text-xs font-bold shrink-0">
+                <span v-if="phraseLoading">產生中...</span>
+                <span v-else>💬 產生例句</span>
+            </button>
+        </div>
+        <div v-if="phraseError" class="text-[10px] text-red-500 font-bold px-1">{{ phraseError }}</div>
+    </div>
+
+    <div v-if="phraseResult" class="space-y-3">
+        <div v-for="grp in phraseResult.groups" :key="grp.title" class="sketch-card p-4 space-y-2">
+            <h4 class="text-sm font-bold text-[#4a463f] flex items-center gap-1.5">
+                <i :data-lucide="grp.icon" class="w-4 h-4 text-[#a8a297]"></i>{{ grp.title }}
+            </h4>
+            <div v-for="(p, pi) in grp.items" :key="pi"
+                 class="bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20 text-xs font-bold text-[#736c60] space-y-0.5">
+                <div class="text-[#4a463f]">{{ p.zh }}</div>
+                <div>{{ p.local }}<span v-if="p.pron" class="text-[#a8a297] font-normal"> （{{ p.pron }}）</span></div>
+            </div>
+        </div>
+        <p class="text-[9px] text-[#a8a297] text-center font-bold px-2">
+            ※ {{ phraseResult.country }} 若非日文/韓文地區，暫以通用英語例句顯示，實際用語仍以當地慣用說法為準
+        </p>
+    </div>
+</div>
+
+
 <!-- 一般文字卡片 (實用日語、緊急應對) -->
 
 <div v-if="!['checklist','flight','hotel','ticket','backup'].includes(resourceTab)" class="space-y-3">
@@ -883,9 +1132,39 @@ body {
     </div>
 </div>
 
+
+
 <!-- 行前準備 (Checklist) -->
 
 <div v-if="resourceTab === 'checklist'" class="space-y-2.5">
+
+<!-- 入境資訊自動產生器 -->
+<div class="sketch-card p-4 space-y-2 relative">
+    <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">ENTRY INFO</div>
+    <div class="flex gap-2 pt-1">
+        <input type="text" v-model="entryCityInput" @keyup.enter="generateEntryInfo"
+            placeholder="輸入國家或城市，如：日本、首爾"
+            class="flex-1 sketch-input px-3 py-2 text-xs text-[#4a463f] placeholder-[#c4beaf] focus:outline-none">
+        <button @click="generateEntryInfo" :disabled="entryLoading"
+            class="px-4 py-2 sketch-btn text-xs font-bold shrink-0">
+            <span v-if="entryLoading">查詢中...</span>
+            <span v-else>🛂 查詢入境資訊</span>
+        </button>
+    </div>
+    <div v-if="entryError" class="text-[10px] text-red-500 font-bold px-1">{{ entryError }}</div>
+    <div v-if="entryResult" class="space-y-2 pt-1">
+        <h4 class="text-sm font-bold text-[#4a463f]">🛃 {{ entryResult.country }}｜入境相關規定</h4>
+        <p class="text-xs text-[#736c60] font-bold whitespace-pre-line bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20 leading-relaxed">{{ entryResult.summary }}</p>
+        <div class="space-y-1">
+            <a v-for="lk in entryResult.links" :key="lk.url" :href="lk.url" target="_blank"
+                class="flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-[#fdfcf9] p-2 rounded-lg border border-[#5c554a]/20 hover:bg-blue-50">
+                <i data-lucide="external-link" class="w-3.5 h-3.5 shrink-0"></i>{{ lk.name }}
+            </a>
+        </div>
+        <p class="text-[9px] text-[#a8a297] font-bold px-1">※ 規定時常更新，請以連結內官方公告為最終依據</p>
+    </div>
+</div>
+
 
 <!-- 行程住宿提醒 -->
 <div v-if="hotelItineraries.length > 0" class="sketch-card p-3.5 space-y-2">
@@ -1405,9 +1684,15 @@ body {
                 <input type="text" v-model="itineraryForm.title" class="w-full sketch-input p-2 text-sm focus:outline-none">
             </div>
             <div>
-                <label class="text-[10px] text-[#a8a297] font-bold block mb-1">類型 (如 spot, meal)</label>
-                <input type="text" v-model="itineraryForm.type" class="w-full sketch-input p-2 text-sm focus:outline-none">
-            </div>
+    <label class="text-[10px] text-[#a8a297] font-bold block mb-1">類型</label>
+    <select v-model="itineraryForm.type" class="w-full sketch-input p-2 text-sm focus:outline-none">
+        <option value="景點">📍 景點</option>
+        <option value="餐廳">🍜 餐廳</option>
+        <option value="交通">🚃 交通</option>
+        <option value="其他">📌 其他</option>
+    </select>
+</div>
+
         </div>
        <div class="grid grid-cols-2 gap-3">
             <div>
@@ -1467,13 +1752,64 @@ body {
 
 <!-- Expense Modal -->
 
-<div v-if="expenseModalOpen" class="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center z-[1001]" @click.self="expenseModalOpen = false">
+<div v-if="expenseModalOpen" class="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center z-[1001]" @click.self="closeExpenseModal">
     <div class="bg-[#fffdf9] w-full rounded-t-3xl p-6 space-y-4 border-t-2 border-[#5c554a] shadow-xl relative">
         <div class="absolute -top-3 left-1/3 right-1/3 h-5 paper-tape text-center text-[10px] font-bold text-[#5c554a]/60">EXPENSE</div>
         <div class="flex justify-between items-center">
             <h3 class="text-sm font-bold text-[#4a463f]">✎ 記錄一筆手寫支出</h3>
-            <button @click="expenseModalOpen = false" class="text-[#a8a297] hover:text-[#4a463f]"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <button @click="closeExpenseModal" class="text-[#a8a297] hover:text-[#4a463f]"><i data-lucide="x" class="w-5 h-5"></i></button>
         </div>
+
+        <!-- 收據相片／即時拍照 -->
+        <div v-if="isModalCameraActive" class="relative bg-black rounded-2xl overflow-hidden aspect-[4/3] flex flex-col justify-between border-2 border-[#5c554a]">
+            <video id="modal-camera-feed" autoplay playsinline class="w-full h-full object-cover"></video>
+            <div class="absolute bottom-4 left-0 right-0 flex justify-around items-center px-6 z-10">
+                <button @click="stopCameraForExpense" class="w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center backdrop-blur-md">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <button @click="capturePhotoForExpense" class="w-16 h-16 rounded-full border-4 border-white bg-red-500/80 hover:bg-red-600 active:scale-95 transition-all flex items-center justify-center">
+                    <span class="w-8 h-8 rounded-full bg-white block"></span>
+                </button>
+                <button @click="switchCameraForExpense" class="w-10 h-10 rounded-full bg-black/40 text-white flex items-center justify-center backdrop-blur-md">
+                    <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <div v-else class="space-y-3">
+            <div class="relative bg-[#fdfcf9] rounded-xl border border-[#5c554a]/20 overflow-hidden" :class="expenseForm.photo ? 'p-0' : 'p-8'">
+                <div v-if="expenseForm.photo" class="relative">
+                    <img :src="expenseForm.photo" class="w-full max-h-72 object-contain bg-[#2a2825] block mx-auto rounded-xl" />
+                    <button @click="expenseForm.photo = ''" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors z-10">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div v-else class="flex flex-col items-center space-y-3 text-center">
+                    <div class="w-16 h-16 rounded-full bg-[#eae5da] flex items-center justify-center text-[#8c8577]">
+                        <i data-lucide="camera" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-[#4a463f]">拍攝收據或上傳照片</p>
+                        <p class="text-[10px] text-[#a8a297] font-bold mt-1">照片會跟這筆開銷一起保存</p>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <button @click="startCameraForExpense" class="flex items-center justify-center gap-2 py-3 sketch-btn text-xs font-bold text-[#4a463f]">
+                    <i data-lucide="camera" class="w-4 h-4"></i> 開啟相機
+                </button>
+                <button @click="triggerExpenseFileInput" class="flex items-center justify-center gap-2 py-3 sketch-btn text-xs font-bold text-[#4a463f]">
+                    <i data-lucide="image" class="w-4 h-4"></i> 選擇照片
+                </button>
+                <input type="file" id="expense-file-upload-input" accept="image/*" class="hidden" @change="onExpensePhotoUploaded" />
+            </div>
+        </div>
+
+        <div v-if="expenseForm.photo" class="flex items-center gap-2 bg-[#eae5da]/60 border border-[#5c554a]/20 rounded-xl p-2.5 text-xs font-bold text-[#736c60]">
+            <i data-lucide="check-circle" class="w-4 h-4 shrink-0 text-[#5c7a4a]"></i>
+            <span>已偵測到相片！這筆帳目將會一併儲存這張照片。</span>
+        </div>
+
         <div>
             <label class="text-[10px] text-[#a8a297] font-bold block mb-1">金額</label>
             <input type="number" v-model="expenseForm.amount" placeholder="0" class="w-full bg-transparent text-3xl font-bold border-b-2 border-[#5c554a] py-1 focus:outline-none">
@@ -1502,10 +1838,9 @@ body {
                 </select>
             </div>
         </div>
-        <button @click="submitExpense" class="w-full py-3 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da]">儲存紀錄</button>
+        <button @click="submitExpense" class="w-full py-3 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da]">儲存紀錄（含相片）</button>
     </div>
 </div>
-
 <!-- Excel Import Confirm Modal -->
 
 <div v-if="excelImportModal.isOpen" class="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-[1002] px-6">
@@ -1589,8 +1924,8 @@ body {
             <img v-if="bookingForm.image" :src="bookingForm.image" class="w-full h-28 object-cover rounded-xl border-2 border-[#5c554a]" />
             <label class="flex items-center justify-center gap-2 w-full py-2 bg-[#fcfaf4] border-2 border-dashed border-[#5c554a]/30 rounded-xl text-xs text-[#a8a297] cursor-pointer hover:border-[#5c554a] transition-colors font-bold">
                 <i data-lucide="image-plus" class="w-4 h-4"></i>
-                {{ bookingForm.image ? '更換手繪照片' : '上傳參考照片' }}
-                <input type="file" accept="image/*" class="hidden" @change="onBookingImageSelected" />
+                {{ bookingImageUploading ? '上傳中...' : (bookingForm.image ? '更換手繪照片' : '上傳參考照片') }}
+                <input type="file" accept="image/*" class="hidden" :disabled="bookingImageUploading" @change="onBookingImageSelected" />
             </label>
             <button v-if="bookingForm.image" @click="bookingForm.image = ''" class="text-[10px] text-red-500 font-bold hover:underline">✕ 移除影像</button>
         </div>
@@ -1838,6 +2173,11 @@ body {
             const weatherCityInput2 = ref(localStorage.getItem(`${APP_ID}__weather_city2`) || '');
             const weatherLoading2 = ref(false);
             const weatherError2 = ref('');
+// ── 每日行程天氣快取 ──
+const dayWeatherCache = Vue.reactive({});
+const dayWeatherLoading = ref(false);
+const dayWeatherError = ref('');
+
 
             // ── 匯率換算 ──
             const fxCurrencies = [
@@ -2042,6 +2382,60 @@ body {
             };
 
             const fetchWeather = () => fetchWeatherByGPS(1);
+const getISODateByDay = (day) => {
+    if (day > 26) return null;
+    const baseDate = new Date(tripInfo.value.startDate || '2027-03-15');
+    baseDate.setDate(baseDate.getDate() + (day - 1));
+    const y = baseDate.getFullYear(), m = String(baseDate.getMonth() + 1).padStart(2, '0'), d = String(baseDate.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+};
+
+const fetchDayWeather = async (day) => {
+    const iso = getISODateByDay(day);
+    if (!iso || dayWeatherCache[day]) return; // 超出範圍或已有快取就不重抓
+    const city = (weatherCityInput.value || '').trim();
+    if (!city) return;
+
+    dayWeatherLoading.value = true; dayWeatherError.value = '';
+    try {
+        const { lat, lon, name } = await geocodeCity(city);
+        const wxRes = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+            `&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+            `&timezone=auto&forecast_days=16`
+        );
+        const wx = await wxRes.json();
+        const idx = (wx.daily?.time || []).indexOf(iso);
+        if (idx === -1) {
+            dayWeatherCache[day] = { outOfRange: true, city: name };
+        } else {
+            const cond = wmoToCondition(wx.daily.weathercode[idx]);
+            dayWeatherCache[day] = {
+                city: name,
+                condition: cond.icon,
+                tempRange: `${Math.round(wx.daily.temperature_2m_min[idx])} – ${Math.round(wx.daily.temperature_2m_max[idx])}°C`,
+                pop: `${wx.daily.precipitation_probability_max[idx] ?? '--'}%`
+            };
+        }
+        nextTick(() => lucide.createIcons());
+    } catch (e) {
+        dayWeatherError.value = '天氣載入失敗，請稍後再試';
+    } finally {
+        dayWeatherLoading.value = false;
+    }
+};
+
+const fetchDayWeatherRange = (day) => {
+    [day, day + 1, day + 2].forEach(d => fetchDayWeather(d));
+};
+
+const getShortDateLabel = (day) => {
+    const iso = getISODateByDay(day);
+    if (!iso) return `第${day}天`;
+    const d = new Date(iso);
+    const wk = ['日','一','二','三','四','五','六'][d.getDay()];
+    return `${iso.slice(5).replace('-', '/')} (${wk})`;
+};
 
             const categories = ref(JSON.parse(localStorage.getItem(`${APP_ID}__categories`)) || ['餐飲', '交通', '住宿', '購物', '體驗', '其他']);
             const payMethods = ref(JSON.parse(localStorage.getItem(`${APP_ID}__paymethods`)) || ['現金', '信用卡', '行動支付', '電子票證']);
@@ -2073,6 +2467,40 @@ const viewingPhoto = ref(null);
                 _dhTimer = setTimeout(() => saveToStorage(), 800);
             };
 
+// ── 每日景點照片相簿 ──
+            const dayPhotos = Vue.reactive(JSON.parse(localStorage.getItem(`${APP_ID}__day_photos`)) || {});
+            const dayPhotoUploading = ref(false);
+            const saveDayPhotos = () => {
+                localStorage.setItem(`${APP_ID}__day_photos`, JSON.stringify(dayPhotos));
+                saveToStorage();
+            };
+            const onDayPhotoSelected = async (e, day) => {
+                const files = Array.from(e.target.files || []);
+                if (!files.length) return;
+                dayPhotoUploading.value = true;
+                if (!dayPhotos[day]) dayPhotos[day] = [];
+                try {
+                    for (const file of files) {
+                        const path = `trips/${APP_ID}/day-photos/${day}/${Date.now()}_${file.name}`;
+                        const url = await window._storageUpload(path, file);
+                        dayPhotos[day].push({ url, path });
+                    }
+                    saveDayPhotos();
+                } catch (err) {
+                    showToast('照片上傳失敗，請確認 Firebase Storage 是否已啟用');
+                } finally {
+                    dayPhotoUploading.value = false;
+                    e.target.value = '';
+                }
+            };
+            const deleteDayPhoto = (day, idx) => {
+                const target = dayPhotos[day] && dayPhotos[day][idx];
+                if (!target) return;
+                window._storageDelete(target.path);
+                dayPhotos[day].splice(idx, 1);
+                saveDayPhotos();
+            };
+
             // ★ 範例清空：資源備忘初始化為空
             const resources = ref(JSON.parse(localStorage.getItem(`${APP_ID}__resources`)) || []);
 
@@ -2086,6 +2514,212 @@ const viewingPhoto = ref(null);
             const itineraryForm = ref({ day: 1, time: '', type: 'spot', title: '', transport: '', google: '', nav: '', note: '' });
             const resourceModal = ref({ isOpen: false, isEdit: false, currentId: null });
             const resourceForm = ref({ type: 'japanese', title: '', content: '' });
+const emergencyCityInput = ref(localStorage.getItem(`${APP_ID}__emergency_city`) || '');
+const emergencyInfo = ref(null);
+const emergencyLoading = ref(false);
+const emergencyError = ref('');
+const emergencyPhoneDB = {
+    JP:{country:'日本',police:'110',ambulance:'119'}, KR:{country:'韓國',police:'112',ambulance:'119'},
+    CN:{country:'中國',police:'110',ambulance:'120'}, HK:{country:'香港',police:'999',ambulance:'999'},
+    MO:{country:'澳門',police:'999',ambulance:'999'}, TH:{country:'泰國',police:'191',ambulance:'1669'},
+    VN:{country:'越南',police:'113',ambulance:'115'}, SG:{country:'新加坡',police:'999',ambulance:'995'},
+    MY:{country:'馬來西亞',police:'999',ambulance:'999'}, PH:{country:'菲律賓',police:'911',ambulance:'911'},
+    ID:{country:'印尼',police:'110',ambulance:'118'}, US:{country:'美國',police:'911',ambulance:'911'},
+    CA:{country:'加拿大',police:'911',ambulance:'911'}, GB:{country:'英國',police:'999',ambulance:'999'},
+    FR:{country:'法國',police:'17',ambulance:'15'}, DE:{country:'德國',police:'110',ambulance:'112'},
+    IT:{country:'義大利',police:'113',ambulance:'118'}, ES:{country:'西班牙',police:'091',ambulance:'112'},
+    NL:{country:'荷蘭',police:'112',ambulance:'112'}, CH:{country:'瑞士',police:'117',ambulance:'144'},
+    AT:{country:'奧地利',police:'133',ambulance:'144'}, AU:{country:'澳洲',police:'000',ambulance:'000'},
+    NZ:{country:'紐西蘭',police:'111',ambulance:'111'}, TR:{country:'土耳其',police:'155',ambulance:'112'},
+    IN:{country:'印度',police:'100',ambulance:'102'}, AE:{country:'阿聯酋',police:'999',ambulance:'998'},
+    CZ:{country:'捷克',police:'158',ambulance:'155'},
+};
+const emergencyFallback = { police: '112 或 911（多數國家通用）', ambulance: '112 或 911（多數國家通用）' };
+
+const generateEmergencyHandbook = async () => {
+    const city = emergencyCityInput.value.trim();
+    if (!city) { emergencyError.value = '請先輸入城市名稱'; return; }
+    emergencyLoading.value = true; emergencyError.value = '';
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=jsonv2&addressdetails=1&limit=1&accept-language=zh-TW`);
+        const json = await res.json();
+        if (!json.length) throw new Error('NOT_FOUND');
+        const cc = (json[0].address?.country_code || '').toUpperCase();
+        const base = emergencyPhoneDB[cc] || { ...emergencyFallback, country: json[0].address?.country || city };
+        emergencyInfo.value = { country: base.country || (emergencyPhoneDB[cc]?.country), ...base };
+        localStorage.setItem(`${APP_ID}__emergency_city`, city);
+        nextTick(() => lucide.createIcons());
+    } catch (e) {
+        emergencyError.value = e.message === 'NOT_FOUND' ? `找不到「${city}」，請確認拼寫或改輸入所屬國家` : '查詢失敗，請稍後再試';
+        emergencyInfo.value = null;
+    } finally {
+        emergencyLoading.value = false;
+    }
+};
+// ── 實用例句／入境資訊 共用：依城市查國家代碼 ──
+const getCountryCodeByCity = async (city) => {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=jsonv2&addressdetails=1&limit=1&accept-language=zh-TW`);
+    const json = await res.json();
+    if (!json.length) throw new Error('NOT_FOUND');
+    return { cc: (json[0].address?.country_code || '').toUpperCase(), country: json[0].address?.country || city };
+};
+
+// ── 實用例句資料庫 ──
+const phraseDB = {
+    JP: { country: '日本', groups: [
+        { title: '機場與海關', icon: 'plane', items: [
+            { zh: '這是我的護照。', local: 'パスポートです。', pron: 'Pasupōto desu' },
+            { zh: '我是來觀光的。', local: '観光で来ました。', pron: 'Kankō de kimashita' },
+            { zh: '我沒有需要申報的東西。', local: '申告するものはありません。', pron: 'Shinkoku suru mono wa arimasen' },
+        ]},
+        { title: '交通與問路', icon: 'train-front', items: [
+            { zh: '請問車站在哪裡？', local: '駅はどこですか？', pron: 'Eki wa doko desu ka' },
+            { zh: '到這裡要怎麼走？', local: 'ここへはどう行けばいいですか？', pron: 'Koko e wa dō ikeba ii desu ka' },
+            { zh: '這班車有到○○嗎？', local: 'この電車は○○に行きますか？', pron: 'Kono densha wa ○○ ni ikimasu ka' },
+        ]},
+        { title: '住宿與飯店', icon: 'building-2', items: [
+            { zh: '我有預約，姓名是○○。', local: '予約しています、名前は○○です。', pron: 'Yoyaku shiteimasu, namae wa ○○ desu' },
+            { zh: '可以寄放行李嗎？', local: '荷物を預けられますか？', pron: 'Nimotsu o azukeraremasu ka' },
+            { zh: 'Wifi 密碼是什麼？', local: 'Wi-Fiのパスワードは何ですか？', pron: 'Wi-Fi no pasuwādo wa nan desu ka' },
+        ]},
+        { title: '點餐', icon: 'utensils-crossed', items: [
+            { zh: '請給我菜單。', local: 'メニューをください。', pron: 'Menyū o kudasai' },
+            { zh: '我要這個。', local: 'これをください。', pron: 'Kore o kudasai' },
+            { zh: '買單。', local: 'お会計お願いします。', pron: 'Okaikei onegaishimasu' },
+        ]},
+        { title: '購物', icon: 'shopping-bag', items: [
+            { zh: '這個多少錢？', local: 'これはいくらですか？', pron: 'Kore wa ikura desu ka' },
+            { zh: '可以退稅嗎？', local: '免税できますか？', pron: 'Menzei dekimasu ka' },
+            { zh: '可以刷卡嗎？', local: 'カードは使えますか？', pron: 'Kādo wa tsukaemasu ka' },
+        ]},
+    ]},
+    KR: { country: '韓國', groups: [
+        { title: '機場與海關', icon: 'plane', items: [
+            { zh: '這是我的護照。', local: '여권입니다.', pron: 'Yeogwon-imnida' },
+            { zh: '我是來觀光的。', local: '관광하러 왔어요.', pron: 'Gwangwang-hareo wasseoyo' },
+            { zh: '我沒有需要申報的東西。', local: '신고할 물건 없어요.', pron: 'Singohal mulgeon eopseoyo' },
+        ]},
+        { title: '交通與問路', icon: 'train-front', items: [
+            { zh: '請問車站在哪裡？', local: '역이 어디예요?', pron: 'Yeogi eodiyeyo' },
+            { zh: '到這裡要怎麼走？', local: '여기 어떻게 가요?', pron: 'Yeogi eotteoke gayo' },
+            { zh: '這班車有到○○嗎？', local: '이 열차 ○○ 가요?', pron: 'I yeolcha ○○ gayo' },
+        ]},
+        { title: '住宿與飯店', icon: 'building-2', items: [
+            { zh: '我有預約，姓名是○○。', local: '예약했어요, 이름은 ○○예요.', pron: 'Yeyakhaesseoyo, ireumeun ○○yeyo' },
+            { zh: '可以寄放行李嗎？', local: '짐 맡길 수 있어요?', pron: 'Jim matgil su isseoyo' },
+            { zh: 'Wifi 密碼是什麼？', local: '와이파이 비밀번호가 뭐예요?', pron: 'Waipai bimilbeonhoga mwoyeyo' },
+        ]},
+        { title: '點餐', icon: 'utensils-crossed', items: [
+            { zh: '請給我菜單。', local: '메뉴 주세요.', pron: 'Menyu juseyo' },
+            { zh: '我要這個。', local: '이거 주세요.', pron: 'Igeo juseyo' },
+            { zh: '買單。', local: '계산해 주세요.', pron: 'Gyesanhae juseyo' },
+        ]},
+        { title: '購物', icon: 'shopping-bag', items: [
+            { zh: '這個多少錢？', local: '이거 얼마예요?', pron: 'Igeo eolmayeyo' },
+            { zh: '可以退稅嗎？', local: '면세 되나요?', pron: 'Myeonse doenayo' },
+            { zh: '可以刷卡嗎？', local: '카드 되나요?', pron: 'Kadeu doenayo' },
+        ]},
+    ]},
+};
+const phraseFallback = { country: '', groups: [
+    { title: '機場與海關', icon: 'plane', items: [
+        { zh: '這是我的護照。', local: 'This is my passport.', pron: '' },
+        { zh: '我是來觀光的。', local: "I'm here for tourism.", pron: '' },
+        { zh: '我沒有需要申報的東西。', local: 'Nothing to declare.', pron: '' },
+    ]},
+    { title: '交通與問路', icon: 'train-front', items: [
+        { zh: '請問車站在哪裡？', local: 'Where is the station?', pron: '' },
+        { zh: '到這裡要怎麼走？', local: 'How do I get here?', pron: '' },
+        { zh: '這班車有到○○嗎？', local: 'Does this go to ○○?', pron: '' },
+    ]},
+    { title: '住宿與飯店', icon: 'building-2', items: [
+        { zh: '我有預約，姓名是○○。', local: 'I have a reservation under ○○.', pron: '' },
+        { zh: '可以寄放行李嗎？', local: 'Can I store my luggage?', pron: '' },
+        { zh: 'Wifi 密碼是什麼？', local: "What's the Wifi password?", pron: '' },
+    ]},
+    { title: '點餐', icon: 'utensils-crossed', items: [
+        { zh: '請給我菜單。', local: 'Menu, please.', pron: '' },
+        { zh: '我要這個。', local: "I'll have this.", pron: '' },
+        { zh: '買單。', local: 'Check, please.', pron: '' },
+    ]},
+    { title: '購物', icon: 'shopping-bag', items: [
+        { zh: '這個多少錢？', local: 'How much is this?', pron: '' },
+        { zh: '可以退稅嗎？', local: 'Is tax refund available?', pron: '' },
+        { zh: '可以刷卡嗎？', local: 'Do you accept cards?', pron: '' },
+    ]},
+]};
+
+const phraseCityInput = ref(localStorage.getItem(`${APP_ID}__phrase_city`) || '');
+const phraseResult = ref(null);
+const phraseLoading = ref(false);
+const phraseError = ref('');
+
+const generatePhrases = async () => {
+    const city = phraseCityInput.value.trim();
+    if (!city) { phraseError.value = '請先輸入國家或城市名稱'; return; }
+    phraseLoading.value = true; phraseError.value = '';
+    try {
+        const { cc, country } = await getCountryCodeByCity(city);
+        const base = phraseDB[cc] || phraseFallback;
+        phraseResult.value = { country: base.country || country, groups: base.groups };
+        localStorage.setItem(`${APP_ID}__phrase_city`, city);
+        nextTick(() => lucide.createIcons());
+    } catch (e) {
+        phraseError.value = e.message === 'NOT_FOUND' ? `找不到「${city}」，請確認拼寫` : '查詢失敗，請稍後再試';
+        phraseResult.value = null;
+    } finally {
+        phraseLoading.value = false;
+    }
+};
+
+// ── 入境資訊資料庫 ──
+const entryInfoDB = {
+    JP: {
+        country: '日本',
+        summary: '持台灣護照赴日觀光、探親或短期商務（90 天內）免簽證；建議出發前於 Visit Japan Web 完成入境審查與海關申報線上登錄，抵達時出示 QR Code 可加速通關。護照效期建議 6 個月以上，並備妥回程機票與住宿證明。',
+        links: [
+            { name: 'Visit Japan Web（入境審查・海關申報線上登錄）', url: 'https://www.vjw.digital.go.jp/' },
+            { name: '日本外務省簽證資訊', url: 'https://www.mofa.go.jp/j_info/visit/visa/index.html' },
+        ]
+    },
+    KR: {
+        country: '韓國',
+        summary: '持台灣護照赴韓觀光 90 天內免簽證，目前免申請 K-ETA（豁免至 2026/12/31）。入境前需於「e-Arrival Card」完成電子入境申報（建議出發前 3 天內、最晚於航班起飛前完成）；若持有效 K-ETA 或已申辦 SeS 自動通關則免填。',
+        links: [
+            { name: 'e-Arrival Card（韓國電子入境卡）', url: 'https://www.e-arrivalcard.go.kr/' },
+            { name: 'Q-CODE（如需申報健康狀態）', url: 'https://qcode.kdca.go.kr/' },
+        ]
+    },
+};
+const entryInfoFallback = {
+    summary: '目前尚無此國家/地區的預設入境資訊，建議至外交部領事事務局查詢簽證與入境規定，並搜尋當地官方移民/海關網站確認最新規定。',
+    links: [
+        { name: '外交部領事事務局', url: 'https://www.boca.gov.tw/' },
+    ]
+};
+
+const entryCityInput = ref(localStorage.getItem(`${APP_ID}__entry_city`) || '');
+const entryResult = ref(null);
+const entryLoading = ref(false);
+const entryError = ref('');
+
+const generateEntryInfo = async () => {
+    const city = entryCityInput.value.trim();
+    if (!city) { entryError.value = '請先輸入國家或城市名稱'; return; }
+    entryLoading.value = true; entryError.value = '';
+    try {
+        const { cc, country } = await getCountryCodeByCity(city);
+        const base = entryInfoDB[cc] || entryInfoFallback;
+        entryResult.value = { country: base.country || country, summary: base.summary, links: base.links };
+        localStorage.setItem(`${APP_ID}__entry_city`, city);
+    } catch (e) {
+        entryError.value = e.message === 'NOT_FOUND' ? `找不到「${city}」，請確認拼寫` : '查詢失敗，請稍後再試';
+        entryResult.value = null;
+    } finally {
+        entryLoading.value = false;
+    }
+};
+
             const toast = ref({ show: false, message: '' });
 
             const currentTabTitle = computed(() => {
@@ -2181,6 +2815,7 @@ const viewingPhoto = ref(null);
             const bookings = ref(JSON.parse(localStorage.getItem(`${APP_ID}__bookings`)) || []);
             const bookingModal = ref({ isOpen: false, isEdit: false, currentId: null });
             const bookingForm = ref({});
+            const bookingImageUploading = ref(false);
             const saveBookings = () => saveToStorage();
 
             const openAddBooking = () => {
@@ -2212,17 +2847,28 @@ const viewingPhoto = ref(null);
                 nextTick(() => lucide.createIcons());
             };
             const deleteBooking = (id) => {
+                const target = bookings.value.find(b => b.id === id);
+                if (target && target.imagePath) window._storageDelete(target.imagePath);
                 bookings.value = bookings.value.filter(b => b.id !== id);
                 saveBookings();
                 showToast('預訂手記已撕除');
                 nextTick(() => lucide.createIcons());
             };
-            const onBookingImageSelected = (e) => {
+            const onBookingImageSelected = async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-                const reader = new FileReader();
-                reader.onload = ev => { bookingForm.value.image = ev.target.result; };
-                reader.readAsDataURL(file);
+                bookingImageUploading.value = true;
+                try {
+                    const path = `trips/${APP_ID}/bookings/${Date.now()}_${file.name}`;
+                    const url = await window._storageUpload(path, file);
+                    bookingForm.value.image = url;
+                    bookingForm.value.imagePath = path;
+                } catch (err) {
+                    showToast('圖片上傳失敗，請確認 Firebase Storage 是否已啟用');
+                } finally {
+                    bookingImageUploading.value = false;
+                    e.target.value = '';
+                }
             };
 
             const expandedBackupIdxSet = ref(new Set());
@@ -2375,6 +3021,18 @@ const viewingPhoto = ref(null);
             const formatNumber = (num) => (num || 0).toLocaleString();
             const textClass = (tab) => currentTab.value === tab ? 'highlight-yellow text-[#4a463f] scale-105' : 'text-[#a8a297]';
             const getWeatherIcon = (cond) => cond || 'cloud';
+// ── 行程分類樣式（景點／餐廳／交通）──
+const itineraryTypeStyleMap = {
+    '景點': { icon: 'camera', badge: 'bg-[#eef3ea] border-[#8fa87c] text-[#5c7a4a]', border: 'border-l-4 border-l-[#8fa87c]' },
+    'spot': { icon: 'camera', badge: 'bg-[#eef3ea] border-[#8fa87c] text-[#5c7a4a]', border: 'border-l-4 border-l-[#8fa87c]' },
+    '餐廳': { icon: 'utensils-crossed', badge: 'bg-[#faeee7] border-[#d99a6c] text-[#a9673a]', border: 'border-l-4 border-l-[#d99a6c]' },
+    'meal': { icon: 'utensils-crossed', badge: 'bg-[#faeee7] border-[#d99a6c] text-[#a9673a]', border: 'border-l-4 border-l-[#d99a6c]' },
+    '交通': { icon: 'train-front', badge: 'bg-[#e9f0f7] border-[#7ea3c2] text-[#3f6f92]', border: 'border-l-4 border-l-[#7ea3c2]' },
+    'transport': { icon: 'train-front', badge: 'bg-[#e9f0f7] border-[#7ea3c2] text-[#3f6f92]', border: 'border-l-4 border-l-[#7ea3c2]' },
+};
+const getItineraryTypeStyle = (type) =>
+    itineraryTypeStyleMap[type] || { icon: 'sticky-note', badge: 'bg-[#f2efe9] border-[#a8a297] text-[#8c8577]', border: 'border-l-4 border-l-[#a8a297]' };
+
  // ★ 時間僅顯示「時:分」，不顯示秒
             const formatTimeShort = (t) => (t || '').slice(0, 5);
 
@@ -2445,6 +3103,7 @@ const getShortDateByDay = (day) => {
                 localStorage.setItem(K('resources'), JSON.stringify(resources.value));
                 localStorage.setItem(K('checklist'), JSON.stringify(checklist.value));
                 localStorage.setItem(K('day_highlights'), JSON.stringify(dayHighlights));
+                localStorage.setItem(K('day_photos'), JSON.stringify(dayPhotos));
                 if(_st)clearTimeout(_st);
                 // 立刻標記為「儲存中」，阻止 watch 在這段時間覆蓋本地資料
                 window._saving = true;
@@ -2453,7 +3112,7 @@ const getShortDateByDay = (day) => {
                 _st=setTimeout(async()=>{
                     if(!window._uid){ window._saving=false; return; }
                     try{
-                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,trip_info:tripInfo.value,updatedAt:pendingTs});
+                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,day_photos:dayPhotos,trip_info:tripInfo.value,updatedAt:pendingTs});
                     }
                     catch(e){console.warn('Firestore 同步手帳失敗',e);}
                     finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
@@ -2518,6 +3177,7 @@ const getShortDateByDay = (day) => {
                         if (d.resources) resources.value = d.resources;
                         if (d.checklist) checklist.value = d.checklist;
                         if (d.day_highlights) { Object.keys(dayHighlights).forEach(k => delete dayHighlights[k]); Object.assign(dayHighlights, d.day_highlights); }
+if (d.day_photos) { Object.keys(dayPhotos).forEach(k => delete dayPhotos[k]); Object.assign(dayPhotos, d.day_photos); }
                         if (d.bookings) bookings.value = d.bookings;
                         if (d.map_pins) mapPins.value = d.map_pins;
                         if (d.backup_labels) backupDayLabels.value = d.backup_labels;
@@ -2769,22 +3429,84 @@ const renderLeafletMap = () => {
             };
 
             const openAddExpenseModal = () => {
-                expenseForm.value = { 
-                    title: '', 
-                    amount: null, 
-                    date: new Date().toISOString().split('T')[0], 
-                    category: categories.value[0] || '其他', 
-                    payMethod: payMethods.value[0] || '現金' 
-                };
-                expenseModalOpen.value = true;
-            };
-            const submitExpense = () => {
-                if(!expenseForm.value.amount || !expenseForm.value.title) return;
-                expenses.value.unshift({ id: Date.now(), ...expenseForm.value, amount: Number(expenseForm.value.amount) });
-                saveToStorage();
-                expenseModalOpen.value = false;
-                showToast('開銷明細已載入帳冊');
-            };
+    expenseForm.value = { 
+        title: '', 
+        amount: null, 
+        date: new Date().toISOString().split('T')[0], 
+        category: categories.value[0] || '其他', 
+        payMethod: payMethods.value[0] || '現金',
+        photo: ''
+    };
+    expenseModalOpen.value = true;
+};
+const isModalCameraActive = ref(false);
+const modalCameraStream = ref(null);
+const startCameraForExpense = async () => {
+    isModalCameraActive.value = true;
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacing.value } });
+        modalCameraStream.value = stream;
+        nextTick(() => {
+            const video = document.getElementById('modal-camera-feed');
+            if (video) video.srcObject = stream;
+            lucide.createIcons();
+        });
+    } catch (err) {
+        showToast('無法存取相機，請改用選擇照片。');
+        isModalCameraActive.value = false;
+    }
+};
+const stopCameraForExpense = () => {
+    if (modalCameraStream.value) {
+        modalCameraStream.value.getTracks().forEach(track => track.stop());
+        modalCameraStream.value = null;
+    }
+    isModalCameraActive.value = false;
+};
+const switchCameraForExpense = async () => {
+    currentCameraFacing.value = currentCameraFacing.value === 'user' ? 'environment' : 'user';
+    if (isModalCameraActive.value) { stopCameraForExpense(); await startCameraForExpense(); }
+};
+const triggerExpenseFileInput = () => {
+    const input = document.getElementById('expense-file-upload-input');
+    if (input) input.click();
+};
+const capturePhotoForExpense = async () => {
+    const video = document.getElementById('modal-camera-feed');
+    if (!video) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    const base64Image = canvas.toDataURL('image/jpeg');
+    stopCameraForExpense();
+    expenseForm.value.photo = await compressPhoto(base64Image);
+    nextTick(() => lucide.createIcons());
+};
+const onExpensePhotoUploaded = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+        expenseForm.value.photo = await compressPhoto(ev.target.result);
+        nextTick(() => lucide.createIcons());
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+};
+const closeExpenseModal = () => {
+    stopCameraForExpense();
+    expenseModalOpen.value = false;
+};
+
+           const submitExpense = () => {
+    if(!expenseForm.value.amount || !expenseForm.value.title) return;
+    expenses.value.unshift({ id: Date.now(), ...expenseForm.value, amount: Number(expenseForm.value.amount) });
+    saveToStorage();
+    closeExpenseModal();
+    showToast('開銷明細已載入帳冊（含相片）');
+};
+
             const deleteExpense = (id) => {
     expenses.value = expenses.value.filter(e => e.id !== id);
     if (expensePhotos[id]) {
@@ -2795,26 +3517,72 @@ const renderLeafletMap = () => {
     showToast('開銷帳目已清除');
 };
 
-            // ── 掃描頁：拍照 + 手動記帳 ──
-            const scanPhoto = ref(null);
-            const scanForm = ref({
-                title: '', amount: null,
-                date: new Date().toISOString().split('T')[0],
-                category: categories.value[0] || '其他',
-                payMethod: payMethods.value[0] || '現金'
-            });
+           // ── 掃描頁：拍照 + 手動記帳 ──
+const currentCameraFacing = ref('environment');
+const isCameraActive = ref(false);
+const cameraStream = ref(null);
+const scanPhoto = ref(null);
+const scanForm = ref({
+    title: '', amount: null,
+    date: new Date().toISOString().split('T')[0],
+    category: categories.value[0] || '其他',
+    payMethod: payMethods.value[0] || '現金'
+});
 
-            const onScanPhotoSelected = (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    scanPhoto.value = ev.target.result;
-                    nextTick(() => lucide.createIcons());
-                };
-                reader.readAsDataURL(file);
-                e.target.value = '';
-            };
+const startCamera = async () => {
+    isCameraActive.value = true;
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: currentCameraFacing.value } });
+        cameraStream.value = stream;
+        nextTick(() => {
+            const video = document.getElementById('camera-feed');
+            if (video) video.srcObject = stream;
+            lucide.createIcons();
+        });
+    } catch (err) {
+        showToast('無法存取相機，請改用選擇照片。');
+        isCameraActive.value = false;
+    }
+};
+const stopCamera = () => {
+    if (cameraStream.value) {
+        cameraStream.value.getTracks().forEach(track => track.stop());
+        cameraStream.value = null;
+    }
+    isCameraActive.value = false;
+};
+const switchCamera = async () => {
+    currentCameraFacing.value = currentCameraFacing.value === 'user' ? 'environment' : 'user';
+    if (isCameraActive.value) { stopCamera(); await startCamera(); }
+};
+const triggerFileInput = () => {
+    const input = document.getElementById('scan-file-upload-input');
+    if (input) input.click();
+};
+const capturePhoto = async () => {
+    const video = document.getElementById('camera-feed');
+    if (!video) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+    const base64Image = canvas.toDataURL('image/jpeg');
+    stopCamera();
+    scanPhoto.value = await compressPhoto(base64Image);
+    nextTick(() => lucide.createIcons());
+};
+
+const onScanPhotoSelected = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+        scanPhoto.value = await compressPhoto(ev.target.result);
+        nextTick(() => lucide.createIcons());
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+};
 
 const compressPhoto = (dataUrl) => new Promise((resolve) => {
     const img = new Image();
@@ -2832,14 +3600,15 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
 
             const clearScanPhoto = () => { scanPhoto.value = null; };
 
-            const submitScanExpense = () => {
+           const submitScanExpense = () => {
     if (!scanForm.value.amount || !scanForm.value.title) {
         showToast('請填妥明細名稱與金額'); return;
     }
     const id = Date.now();
     expenses.value.unshift({
         id, ...scanForm.value,
-        amount: Number(scanForm.value.amount)
+        amount: Number(scanForm.value.amount),
+        photo: scanPhoto.value || ''
     });
     saveToStorage();
     scanForm.value = {
@@ -2848,7 +3617,8 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
         category: categories.value[0] || '其他',
         payMethod: payMethods.value[0] || '現金'
     };
-    showToast('收據帳目已成功登打');
+    scanPhoto.value = null;
+    showToast('收據帳目已成功登打（含相片）');
 };
 
 
@@ -3062,6 +3832,8 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
             };
 
             watch(selectedDay, () => nextTick(() => lucide.createIcons()));
+watch(selectedDay, (d) => fetchDayWeatherRange(d), { immediate: true });
+
             watch(currentTab, () => nextTick(() => lucide.createIcons()));
 
             const _loadCloud = (d) => {
@@ -3077,6 +3849,7 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                 if(d.bookings)bookings.value=d.bookings;
                 if(d.map_pins)mapPins.value=d.map_pins;
                 if(d.day_highlights){ Object.keys(dayHighlights).forEach(k=>delete dayHighlights[k]); Object.assign(dayHighlights,d.day_highlights); }
+if(d.day_photos){ Object.keys(dayPhotos).forEach(k=>delete dayPhotos[k]); Object.assign(dayPhotos,d.day_photos); }
                 if(d.trip_info){ tripInfo.value=d.trip_info; localStorage.setItem(`${APP_ID}__trip_info`,JSON.stringify(d.trip_info)); }
                 nextTick(()=>lucide.createIcons());
             };
@@ -3116,13 +3889,17 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                 fxCurrencies, fxFromCurrency, fxAmount, fxRates, fxLoading, fxError, fxRateDate, fetchExchangeRates, fxConvertRate, fxConvert,
                 categories, payMethods, categoryBudgets, expenses,
                 expenseModalOpen, expenseForm, itineraries, resources, itineraryModal, itineraryForm,
-                resourceModal, resourceForm, toast, newCategoryName, newPayMethodName, currentTabTitle, grandTotalExpenses, todayTotal,
+                resourceModal, resourceForm, emergencyCityInput, emergencyInfo, emergencyLoading, emergencyError, generateEmergencyHandbook,phraseCityInput, phraseResult, phraseLoading, phraseError, generatePhrases,
+entryCityInput, entryResult, entryLoading, entryError, generateEntryInfo,toast, newCategoryName, newPayMethodName, currentTabTitle, grandTotalExpenses, todayTotal,
                 groupedExpensesByDate, groupedExpensesByCategory, filteredItineraries, filteredResources, tripInfo, tripInfoModal, tripInfoForm, tripDuration, openTripInfoModal, saveTripInfo, addCustomCategory, deleteCustomCategory, addCustomPayMethod, deleteCustomPayMethod, getTargetDateByDay, getCategorySpent,
-                getBudgetPercent, totalBudget, totalSpent, formatNumber, textClass, getWeatherIcon, switchTab, openAddExpenseModal, submitExpense, deleteExpense, simulateScan, openAddItineraryModal, 
+                getBudgetPercent, totalBudget, totalSpent, formatNumber, textClass, getWeatherIcon, getItineraryTypeStyle,
+dayWeatherCache, dayWeatherLoading, dayWeatherError, fetchDayWeather, fetchDayWeatherRange, getISODateByDay, getShortDateLabel,switchTab, openAddExpenseModal, submitExpense, deleteExpense, simulateScan, openAddItineraryModal, 
                 openEditItineraryModal, saveItinerary, deleteItinerary, moveItinerary, openAddResourceModal, openEditResourceModal, saveResource, deleteResource,
                 checklist, checklistModal, checklistForm, toggleChecklistItem, openAddChecklistModal, openEditChecklistModal, saveChecklistItem, deleteChecklistItem, switchResourceSubTab,
-                bookings, bookingModal, bookingForm, openAddBooking, openEditBooking, saveBooking, deleteBooking, onBookingImageSelected, backupDayLabels, backupItinerariesByDay, openAddBackupItineraryModal, expandedBackupIdxSet, toggleBackupExpand, isBackupExpanded, editingBackupLabelIdx, editingBackupLabelValue, startEditBackupLabel, saveBackupLabel, addToSchedulePicker, openAddToSchedule, confirmAddToSchedule,
+                bookings, bookingModal, bookingForm, bookingImageUploading, openAddBooking, openEditBooking, saveBooking, deleteBooking, onBookingImageSelected, dayPhotos, dayPhotoUploading, onDayPhotoSelected, deleteDayPhoto, backupDayLabels, backupItinerariesByDay, openAddBackupItineraryModal, expandedBackupIdxSet, toggleBackupExpand, isBackupExpanded, editingBackupLabelIdx, editingBackupLabelValue, startEditBackupLabel, saveBackupLabel, addToSchedulePicker, openAddToSchedule, confirmAddToSchedule,
                 scanPhoto, scanForm, onScanPhotoSelected, clearScanPhoto, submitScanExpense,
+isCameraActive, startCamera, stopCamera, switchCamera, triggerFileInput, capturePhoto,
+isModalCameraActive, startCameraForExpense, stopCameraForExpense, switchCameraForExpense, triggerExpenseFileInput, capturePhotoForExpense, onExpensePhotoUploaded, closeExpenseModal,
                 excelImportModal, onExcelImport, confirmExcelImport,
                 mapPins, mapPinnedItems, isMapPinned, toggleMapPin, clearAllMapPins, mapCoords, mapGeoFailed, mapGeocoding, refreshLeafletMap,
                 saveToStorage,
