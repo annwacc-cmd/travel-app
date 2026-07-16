@@ -352,7 +352,7 @@ body {
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         </button>
         <!-- 各功能頁面的新增按鈕 -->
-        <button v-if="currentTab === 'home' || currentTab === 'records'" @click="openAddExpenseModal()" class="w-8 h-8 rounded-full sketch-btn flex items-center justify-center text-[#5c554a] transition-all">
+        <button v-if="currentTab === 'home'" @click="openAddExpenseModal()" class="w-8 h-8 rounded-full sketch-btn flex items-center justify-center text-[#5c554a] transition-all">
             <i data-lucide="plus" class="w-4 h-4"></i>
         </button>
         <div v-if="currentTab === 'itinerary'" class="flex items-center gap-1.5">
@@ -360,7 +360,10 @@ body {
                 <i data-lucide="file-up" class="w-4 h-4"></i>
                 <input type="file" accept=".xlsx,.xls" class="hidden" @change="onExcelImport" />
             </label>
-            <button @click="openAddItineraryModal()" class="w-8 h-8 rounded-full sketch-btn flex items-center justify-center text-[#5c554a] transition-all">
+            <button @click="exportItineraryExcel" title="匯出手寫表格(Excel)" class="w-8 h-8 rounded-full sketch-btn flex items-center justify-center text-[#5c554a] transition-all">
+                <i data-lucide="file-down" class="w-4 h-4"></i>
+            </button>
+            <button @click="openAddItineraryModal()" title="新增行程" class="w-8 h-8 rounded-full sketch-btn flex items-center justify-center text-[#5c554a] transition-all">
                 <i data-lucide="calendar-plus" class="w-4 h-4"></i>
             </button>
         </div>
@@ -507,7 +510,6 @@ body {
 </div>
 <div v-if="fxLoading" class="text-center py-2 text-[11px] text-[#a8a297] animate-pulse font-bold">正在翻閱手寫匯率簿中...</div>
 
-
 </div>
 
 <!-- 今日支出統計 -->
@@ -517,8 +519,175 @@ body {
     <p class="text-4xl font-bold tracking-tight text-[#3d3a34]">NT$ {{ formatNumber(todayTotal) }}</p>
 </div>
 
-<!-- 預算水彩色鉛筆監控 -->
+<!-- 距離出發倒數 -->
+<div v-if="daysUntilDeparture" class="text-center -mt-3">
+    <span class="text-sm font-bold text-[#5c554a] highlight-yellow px-3 py-0.5 inline-block">{{ daysUntilDeparture }}</span>
+</div>
 
+<!-- 今日旅遊導覽 -->
+
+<div v-if="todayDayNumber" class="sketch-card p-5 space-y-4 relative">
+    <div class="absolute -top-2 right-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]">TODAY</div>
+    <p class="text-[11px] text-[#8c8577] font-bold uppercase border-b-2 border-dashed border-[#5c554a]/30 pb-1.5">
+        ✦ 第 {{ todayDayNumber }} 天 旅遊導覽
+    </p>
+
+    <!-- ② 天氣行程建議 -->
+    <div class="space-y-2">
+        <div class="flex justify-between items-center">
+            <span class="text-[11px] font-bold text-[#5c554a]">☁ 天氣行程建議</span>
+            <!-- 有 API Key：直接呼叫 -->
+            <button v-if="claudeApiKey" @click="fetchWeatherSuggestion" :disabled="weatherSuggestionLoading"
+                class="text-[10px] font-bold sketch-btn px-2 py-1 flex items-center gap-1 disabled:opacity-50">
+                <i data-lucide="sparkles" class="w-3 h-3"></i>
+                {{ weatherSuggestionLoading ? '分析中…' : 'AI 建議' }}
+            </button>
+            <!-- 無 API Key：複製提示詞 -->
+            <button v-else @click="copyWeatherPrompt"
+                class="text-[10px] font-bold sketch-btn px-2 py-1 flex items-center gap-1">
+                <i data-lucide="copy" class="w-3 h-3"></i>複製提示詞
+            </button>
+        </div>
+        <!-- 無 API Key：貼上回覆區 -->
+        <div v-if="!claudeApiKey" class="space-y-1.5 mt-1">
+            <p class="text-[9px] text-[#a8a297] font-bold leading-relaxed">
+                ① 點複製提示詞 → ② 開 <a href="https://claude.ai" target="_blank" class="underline underline-offset-1">Claude.ai</a> 貼上送出 → ③ 複製 AI 回覆貼下方 → ④ 點套用
+            </p>
+            <textarea v-model="weatherPasteBuffer" rows="3" placeholder="將 AI 回覆貼在這裡…"
+                class="w-full sketch-input p-2 text-[10px] font-bold focus:outline-none resize-none text-[#4a463f] placeholder-[#c4beaf]"></textarea>
+            <button v-if="weatherPasteBuffer" @click="applyWeatherPaste"
+                class="w-full sketch-btn text-[10px] font-bold py-1.5">套用回覆</button>
+        </div>
+        <div v-if="weatherSuggestionLoading" class="text-[10px] text-[#a8a297] animate-pulse text-center py-2">AI 正在分析天氣與行程…</div>
+        <div v-if="weatherSuggestion"
+            class="text-[11px] text-[#4a463f] font-bold leading-relaxed bg-[#faf8f5] rounded-xl p-3 border border-[#5c554a]/20 whitespace-pre-wrap">
+            {{ weatherSuggestion }}
+        </div>
+    </div>
+
+    <div class="sketch-hr"></div>
+
+    <!-- ③ 下一個景點 -->
+    <div class="space-y-2">
+        <span class="text-[11px] font-bold text-[#5c554a]">📍 下一個景點</span>
+        <div v-if="nextSpot" class="flex items-start gap-2 bg-[#eef3ea]/60 rounded-xl p-3 border border-[#8fa87c]/40">
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-[#4a463f] truncate">{{ nextSpot.title }}</p>
+                <p class="text-[10px] text-[#8c8577] font-bold mt-0.5">
+                    ⏱ {{ formatTimeShort(nextSpot.time) }}
+                    <span v-if="nextSpot.city" class="ml-1">· {{ nextSpot.city }}</span>
+                </p>
+            </div>
+            <a v-if="nextSpot.google || nextSpot.nav" :href="nextSpot.google || nextSpot.nav" target="_blank"
+                class="shrink-0 sketch-btn text-[10px] px-2 py-1 font-bold flex items-center gap-1">
+                <i data-lucide="map-pin" class="w-3 h-3"></i>定位
+            </a>
+        </div>
+        <div v-else class="text-[10px] text-[#a8a297] font-bold text-center py-1">今日景點已全部完成 🎉</div>
+    </div>
+
+    <div class="sketch-hr"></div>
+
+   <!-- 即時交通資訊標題列 -->
+            <div class="flex items-center justify-between mt-2 mb-1">
+                <span class="text-[10px] text-[#a8a297] font-bold">✦ 即時交通資訊</span>
+                <!-- 有 API Key：AI 自動填入 -->
+                <button v-if="claudeApiKey" @click="fetchTransitSuggestion" :disabled="transitSuggestionLoading"
+                    class="text-[10px] font-bold sketch-btn px-2 py-1 flex items-center gap-1 disabled:opacity-50">
+                    <i data-lucide="sparkles" class="w-3 h-3"></i>
+                    {{ transitSuggestionLoading ? 'AI 分析中…' : 'AI 交通建議' }}
+                </button>
+                <!-- 無 API Key：複製提示詞 -->
+                <button v-else @click="copyTransitPrompt"
+                    class="text-[10px] font-bold sketch-btn px-2 py-1 flex items-center gap-1">
+                    <i data-lucide="copy" class="w-3 h-3"></i>複製提示詞
+                </button>
+            </div>
+            <div v-if="transitSuggestionLoading"
+                class="text-[10px] text-[#a8a297] animate-pulse text-center py-2">AI 正在分析交通資訊…</div>
+            <!-- 六欄位顯示（AI 填入後顯示） -->
+            <div class="grid grid-cols-2 gap-2">
+                <div v-for="f in [
+                    { key:'trainNo',  icon:'🚆', label:'車次' },
+                    { key:'platform', icon:'🚉', label:'月台' },
+                    { key:'earlyMin', icon:'⏱', label:'建議提早到站' },
+                    { key:'luggage',  icon:'🧳', label:'行李空間' },
+                    { key:'transfer', icon:'🔄', label:'是否需轉車' },
+                    { key:'warning',  icon:'⚠', label:'注意事項' },
+                ]" :key="f.key"
+                    class="bg-[#faf8f5] rounded-lg p-2 border border-[#5c554a]/20">
+                    <div class="text-[9px] text-[#a8a297] font-bold mb-1">{{ f.icon }} {{ f.label }}</div>
+                    <p class="text-[11px] font-bold text-[#4a463f] min-h-[16px] leading-relaxed break-words">
+                        {{ (allTransitDetails[nextTransport.id]||{})[f.key] || '—' }}
+                    </p>
+                </div>
+            </div>
+            <!-- 無 API Key：貼上 JSON 回覆區 -->
+            <div v-if="!claudeApiKey" class="space-y-1.5 mt-2">
+                <p class="text-[9px] text-[#a8a297] font-bold leading-relaxed">
+                    ① 複製提示詞 → ② 開 <a href="https://claude.ai" target="_blank" class="underline underline-offset-1">Claude.ai</a> 貼上 → ③ 複製 JSON 回覆貼下方 → ④ 點解析
+                </p>
+                <textarea v-model="transitPasteBuffer" rows="3" placeholder="將 AI 的 JSON 回覆貼在這裡…"
+                    class="w-full sketch-input p-2 text-[10px] font-mono focus:outline-none resize-none text-[#4a463f] placeholder-[#c4beaf]"></textarea>
+                <button v-if="transitPasteBuffer" @click="parseTransitPaste"
+                    class="w-full sketch-btn text-[10px] font-bold py-1.5">解析並填入欄位</button>
+            </div>
+
+    <div class="sketch-hr"></div>
+
+    <!-- ⑤ 附近超商 & 廁所 -->
+    <div class="space-y-2">
+        <span class="text-[11px] font-bold text-[#5c554a]">🏪 附近超商 &amp; 廁所</span>
+        <div class="grid grid-cols-2 gap-2">
+            <button @click="openNearbySearch('store')"
+                class="flex items-center justify-center gap-1.5 sketch-btn text-[10px] font-bold py-2">
+                <i data-lucide="shopping-bag" class="w-3 h-3"></i>找超商
+            </button>
+            <button @click="openNearbySearch('toilet')"
+                class="flex items-center justify-center gap-1.5 sketch-btn text-[10px] font-bold py-2">
+                <i data-lucide="toilet" class="w-3 h-3"></i>找廁所
+            </button>
+        </div>
+    </div>
+
+    <div class="sketch-hr"></div>
+
+    <!-- ⑥ 今日住宿 -->
+    <div class="space-y-2">
+        <span class="text-[11px] font-bold text-[#5c554a]">🏨 今日住宿</span>
+        <div v-if="todayAccommodation" class="flex items-start gap-2 bg-[#faf8f5] rounded-xl p-3 border border-[#5c554a]/20">
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-[#4a463f] truncate">{{ todayAccommodation.title }}</p>
+                <p v-if="todayAccommodation.city" class="text-[10px] text-[#8c8577] font-bold mt-0.5">📍 {{ todayAccommodation.city }}</p>
+                <p v-if="todayAccommodation.note" class="text-[10px] text-[#736c60] font-bold mt-0.5 leading-relaxed line-clamp-2">{{ todayAccommodation.note }}</p>
+            </div>
+            <a v-if="todayAccommodation.google || todayAccommodation.nav"
+                :href="todayAccommodation.google || todayAccommodation.nav" target="_blank"
+                class="shrink-0 sketch-btn text-[10px] px-2 py-1 font-bold flex items-center gap-1">
+                <i data-lucide="map-pin" class="w-3 h-3"></i>定位
+            </a>
+        </div>
+        <div v-else class="text-[10px] text-[#a8a297] font-bold text-center py-1">今日行程中無住宿記錄</div>
+    </div>
+</div>
+
+<div v-if="!todayDayNumber" class="text-center py-3 text-[11px] text-[#a8a297] font-bold">
+    ✈️ 旅程出發後自動啟用今日導覽
+</div>
+
+
+</div>
+
+
+
+<!-- 明細 TAB -->
+
+<div v-if="currentTab === 'records'" class="space-y-4">
+    <div class="sketch-card p-5 text-center bg-[#4a463f] text-[#faf8f5]">
+        <p class="text-[10px] tracking-widest font-bold opacity-80 uppercase mb-1">✏️ GRAND TOTAL JOURNAL EXPENSES</p>
+        <p class="text-3xl font-bold">NT$ {{ formatNumber(grandTotalExpenses) }}</p>
+    </div>
+<!-- 預算水彩色鉛筆監控 -->
 <div class="sketch-card p-5 space-y-4 relative">
     <div class="absolute -top-2 right-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]">BUDGETS</div>
     <div class="flex justify-between items-center border-b-2 border-dashed border-[#5c554a]/30 pb-2 cursor-pointer select-none" @click="budgetsCollapsed = !budgetsCollapsed">
@@ -569,12 +738,122 @@ body {
 
 
 </div>
+<!-- 掃描 / 帳目 子頁切換 -->
+<div class="flex gap-2 p-1 sketch-input text-xs font-bold">
+    <button @click="recordsSubTab = 'list'"
+        :class="{'highlight-yellow text-[#4a463f]': recordsSubTab === 'list'}"
+        class="flex-1 py-1.5 rounded-lg text-center transition-all flex items-center justify-center gap-1">
+        <i data-lucide="file-text" class="w-3 h-3"></i> 帳目
+    </button>
+    <button @click="recordsSubTab = 'scan'"
+        :class="{'highlight-yellow text-[#4a463f]': recordsSubTab === 'scan'}"
+        class="flex-1 py-1.5 rounded-lg text-center transition-all flex items-center justify-center gap-1">
+        <i data-lucide="scan" class="w-3 h-3"></i> 掃描
+    </button>
+</div>
+<div v-if="recordsSubTab === 'list'">
+<!-- 檢視切換 -->
 
+<div class="flex gap-2 p-1 sketch-input text-xs font-bold">
+    <button @click="recordsViewMode = 'date'" :class="{'highlight-yellow text-[#4a463f]': recordsViewMode === 'date'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">按日期排序</button>
+    <button @click="recordsViewMode = 'category'" :class="{'highlight-yellow text-[#4a463f]': recordsViewMode === 'category'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">按分類檢視</button>
 </div>
 
-<!-- 掃描與相片 TAB -->
+<!-- 日期模式 -->
+<div v-if="recordsViewMode === 'date'" class="space-y-4">
+    <div v-for="(group, date) in groupedExpensesByDate" :key="date" class="space-y-2">
+        <div class="flex justify-between items-center border-b border-[#5c554a]/30 pb-1 font-bold text-xs">
+            <span class="text-[#8c8577]">📅 {{ date }}</span>
+            <span class="text-[#a8a297]">當日小計: NT$ {{ formatNumber(group.total) }}</span>
+        </div>
+        
+        <div v-for="item in group.items" :key="item.id" class="flex flex-col p-0 sketch-card overflow-hidden">
+            <div class="flex justify-between items-center p-3">
+                <div class="flex items-center space-x-3 flex-1 cursor-pointer" @click="toggleExpensePhoto(item.id)">
+                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-[#5c554a] bg-[#eae5da]/40 text-[#5c554a] shrink-0">{{ item.payMethod }}</span>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
+                            <!-- 顯示有照片的 Tag -->
+                            <span v-if="item.photo" class="text-[9px] text-[#8c8577] bg-[#fdfcf9] px-1.5 py-0.5 rounded border border-[#5c554a]/30 flex items-center gap-0.5">
+                                <i data-lucide="image" class="w-3 h-3"></i> 收據
+                            </span>
+                        </div>
+                        <p class="text-[10px] text-[#a8a297] font-bold">{{ item.category }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3 shrink-0">
+                    <span class="text-sm font-bold text-[#4a463f]">NT$ {{ formatNumber(item.amount) }}</span>
+                    <button @click="deleteExpense(item.id)" class="text-[#a8a297] hover:text-red-500 transition-colors">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 展開的相片區塊 -->
+            <div v-if="expandedExpensePhotos[item.id] && item.photo" class="px-3 pb-3 border-t-2 border-dashed border-[#5c554a]/30 pt-2.5 bg-[#eae5da]/20">
+                <p class="text-[10px] text-[#8c8577] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <i data-lucide="camera" class="w-3.5 h-3.5"></i> 關聯收據相片
+                </p>
+                <div class="relative max-h-60 rounded-xl overflow-hidden border border-[#5c554a]/20 bg-black/5 flex items-center justify-center">
+                    <img :src="item.photo" class="max-w-full max-h-56 object-contain block" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<div v-if="currentTab === 'scan'" class="space-y-4">
+<!-- 分類模式 -->
+<div v-if="recordsViewMode === 'category'" class="space-y-4">
+    <div v-for="(group, category) in groupedExpensesByCategory" :key="category" class="space-y-2">
+        <div class="flex justify-between items-center border-b border-[#5c554a]/30 pb-1 font-bold text-xs cursor-pointer select-none" @click="toggleCategoryCollapse(category)">
+            <span class="text-[#8c8577] flex items-center gap-1">
+                <i :data-lucide="isCategoryCollapsed(category) ? 'chevron-right' : 'chevron-down'" class="w-3 h-3"></i>
+                🏷️ {{ category }}
+            </span>
+            <span class="text-[#a8a297]">類別小計: NT$ {{ formatNumber(group.total) }}</span>
+        </div>
+        <template v-if="!isCategoryCollapsed(category)">
+            <div v-for="item in group.items" :key="item.id" class="flex flex-col p-0 sketch-card overflow-hidden">
+                <div class="flex justify-between items-center p-3">
+                    <div class="flex items-center space-x-3 flex-1 cursor-pointer" @click="toggleExpensePhoto(item.id)">
+                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-[#5c554a] bg-[#eae5da]/40 text-[#5c554a] shrink-0">{{ item.payMethod }}</span>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
+                                <!-- 顯示有照片的 Tag -->
+                                <span v-if="item.photo" class="text-[9px] text-[#8c8577] bg-[#fdfcf9] px-1.5 py-0.5 rounded border border-[#5c554a]/30 flex items-center gap-0.5">
+                                    <i data-lucide="image" class="w-3 h-3"></i> 收據
+                                </span>
+                            </div>
+                            <p class="text-[10px] text-[#a8a297] font-bold">{{ item.category }}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 shrink-0">
+                        <span class="text-sm font-bold text-[#4a463f]">NT$ {{ formatNumber(item.amount) }}</span>
+                        <button @click="deleteExpense(item.id)" class="text-[#a8a297] hover:text-red-500 transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 展開的相片區塊 -->
+                <div v-if="expandedExpensePhotos[item.id] && item.photo" class="px-3 pb-3 border-t-2 border-dashed border-[#5c554a]/30 pt-2.5 bg-[#eae5da]/20">
+                    <div class="relative max-h-60 rounded-xl overflow-hidden border border-[#5c554a]/20 bg-black/5 flex items-center justify-center">
+                        <img :src="item.photo" class="max-w-full max-h-56 object-contain block" />
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
+<div v-if="expenses.length === 0" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
+    ✎ 目前尚無任何記帳數據，請切換至上方「掃描」分頁記錄您的第一筆旅居開銷！
+</div>
+</div>
+<div v-if="recordsSubTab === 'scan'" class="space-y-4">
+<!-- 掃描與相片 TAB -->
 
 <!-- 收據相片／即時拍照 -->
 <div v-if="isCameraActive" class="relative bg-black rounded-2xl overflow-hidden aspect-[4/3] flex flex-col justify-between border-2 border-[#5c554a]">
@@ -677,117 +956,7 @@ body {
 </div>
 
 </div>
-
-<!-- 明細 TAB -->
-
-<div v-if="currentTab === 'records'" class="space-y-4">
-    <div class="sketch-card p-5 text-center bg-[#4a463f] text-[#faf8f5]">
-        <p class="text-[10px] tracking-widest font-bold opacity-80 uppercase mb-1">✏️ GRAND TOTAL JOURNAL EXPENSES</p>
-        <p class="text-3xl font-bold">NT$ {{ formatNumber(grandTotalExpenses) }}</p>
-    </div>
-
-<!-- 檢視切換 -->
-
-<div class="flex gap-2 p-1 sketch-input text-xs font-bold">
-    <button @click="recordsViewMode = 'date'" :class="{'highlight-yellow text-[#4a463f]': recordsViewMode === 'date'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">按日期排序</button>
-    <button @click="recordsViewMode = 'category'" :class="{'highlight-yellow text-[#4a463f]': recordsViewMode === 'category'}" class="flex-1 py-1.5 rounded-lg text-center transition-all">按分類檢視</button>
 </div>
-
-<!-- 日期模式 -->
-<div v-if="recordsViewMode === 'date'" class="space-y-4">
-    <div v-for="(group, date) in groupedExpensesByDate" :key="date" class="space-y-2">
-        <div class="flex justify-between items-center border-b border-[#5c554a]/30 pb-1 font-bold text-xs">
-            <span class="text-[#8c8577]">📅 {{ date }}</span>
-            <span class="text-[#a8a297]">當日小計: NT$ {{ formatNumber(group.total) }}</span>
-        </div>
-        
-        <div v-for="item in group.items" :key="item.id" class="flex flex-col p-0 sketch-card overflow-hidden">
-            <div class="flex justify-between items-center p-3">
-                <div class="flex items-center space-x-3 flex-1 cursor-pointer" @click="toggleExpensePhoto(item.id)">
-                    <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-[#5c554a] bg-[#eae5da]/40 text-[#5c554a] shrink-0">{{ item.payMethod }}</span>
-                    <div class="min-w-0">
-                        <div class="flex items-center gap-1.5">
-                            <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
-                            <!-- 顯示有照片的 Tag -->
-                            <span v-if="item.photo" class="text-[9px] text-[#8c8577] bg-[#fdfcf9] px-1.5 py-0.5 rounded border border-[#5c554a]/30 flex items-center gap-0.5">
-                                <i data-lucide="image" class="w-3 h-3"></i> 收據
-                            </span>
-                        </div>
-                        <p class="text-[10px] text-[#a8a297] font-bold">{{ item.category }}</p>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-3 shrink-0">
-                    <span class="text-sm font-bold text-[#4a463f]">NT$ {{ formatNumber(item.amount) }}</span>
-                    <button @click="deleteExpense(item.id)" class="text-[#a8a297] hover:text-red-500 transition-colors">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- 展開的相片區塊 -->
-            <div v-if="expandedExpensePhotos[item.id] && item.photo" class="px-3 pb-3 border-t-2 border-dashed border-[#5c554a]/30 pt-2.5 bg-[#eae5da]/20">
-                <p class="text-[10px] text-[#8c8577] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                    <i data-lucide="camera" class="w-3.5 h-3.5"></i> 關聯收據相片
-                </p>
-                <div class="relative max-h-60 rounded-xl overflow-hidden border border-[#5c554a]/20 bg-black/5 flex items-center justify-center">
-                    <img :src="item.photo" class="max-w-full max-h-56 object-contain block" />
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- 分類模式 -->
-<div v-if="recordsViewMode === 'category'" class="space-y-4">
-    <div v-for="(group, category) in groupedExpensesByCategory" :key="category" class="space-y-2">
-        <div class="flex justify-between items-center border-b border-[#5c554a]/30 pb-1 font-bold text-xs cursor-pointer select-none" @click="toggleCategoryCollapse(category)">
-            <span class="text-[#8c8577] flex items-center gap-1">
-                <i :data-lucide="isCategoryCollapsed(category) ? 'chevron-right' : 'chevron-down'" class="w-3 h-3"></i>
-                🏷️ {{ category }}
-            </span>
-            <span class="text-[#a8a297]">類別小計: NT$ {{ formatNumber(group.total) }}</span>
-        </div>
-        <template v-if="!isCategoryCollapsed(category)">
-            <div v-for="item in group.items" :key="item.id" class="flex flex-col p-0 sketch-card overflow-hidden">
-                <div class="flex justify-between items-center p-3">
-                    <div class="flex items-center space-x-3 flex-1 cursor-pointer" @click="toggleExpensePhoto(item.id)">
-                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-[#5c554a] bg-[#eae5da]/40 text-[#5c554a] shrink-0">{{ item.payMethod }}</span>
-                        <div class="min-w-0">
-                            <div class="flex items-center gap-1.5">
-                                <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
-                                <!-- 顯示有照片的 Tag -->
-                                <span v-if="item.photo" class="text-[9px] text-[#8c8577] bg-[#fdfcf9] px-1.5 py-0.5 rounded border border-[#5c554a]/30 flex items-center gap-0.5">
-                                    <i data-lucide="image" class="w-3 h-3"></i> 收據
-                                </span>
-                            </div>
-                            <p class="text-[10px] text-[#a8a297] font-bold">{{ item.category }}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-3 shrink-0">
-                        <span class="text-sm font-bold text-[#4a463f]">NT$ {{ formatNumber(item.amount) }}</span>
-                        <button @click="deleteExpense(item.id)" class="text-[#a8a297] hover:text-red-500 transition-colors">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 展開的相片區塊 -->
-                <div v-if="expandedExpensePhotos[item.id] && item.photo" class="px-3 pb-3 border-t-2 border-dashed border-[#5c554a]/30 pt-2.5 bg-[#eae5da]/20">
-                    <div class="relative max-h-60 rounded-xl overflow-hidden border border-[#5c554a]/20 bg-black/5 flex items-center justify-center">
-                        <img :src="item.photo" class="max-w-full max-h-56 object-contain block" />
-                    </div>
-                </div>
-            </div>
-        </template>
-    </div>
-</div>
-
-<div v-if="expenses.length === 0" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
-    ✎ 目前尚無任何記帳數據，點選右上角「+」記錄您的第一筆旅居開銷吧！
-</div>
-
-</div>
-
 <!-- 行程 TAB -->
 
 <div v-if="currentTab === 'itinerary'" class="space-y-4">
@@ -829,8 +998,15 @@ body {
 
 <div class="text-xs text-[#a8a297] font-bold flex justify-between items-center px-1">
     <span>📅 日期對應：{{ getTargetDateByDay(selectedDay) }}</span>
-    <span>共 {{ filteredItineraries.length }} 處漫遊節點</span>
+    <div class="flex items-center gap-2">
+        <span>共 {{ filteredItineraries.length }} 處漫遊節點</span>
+        <button @click="openMoveDayModal"
+            class="flex items-center gap-1 text-[10px] font-bold text-[#5c554a] px-2 py-0.5 border border-[#5c554a]/40 rounded-md hover:bg-[#eae5da]/60 transition-colors">
+            <i data-lucide="move-horizontal" class="w-3 h-3"></i>移日
+        </button>
+    </div>
 </div>
+
 <!-- 未來三天天氣預報 -->
 <div class="sketch-card p-4 relative">
     <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">3-DAY WEATHER</div>
@@ -870,9 +1046,14 @@ body {
 
 <div class="sketch-card p-4 space-y-2 relative">
     <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">DAY HIGHLIGHT</div>
-    <div class="flex items-center gap-2 pt-1">
-        <span class="text-base select-none shrink-0">✨</span>
-        <label class="text-[11px] font-bold text-[#8c8577] uppercase tracking-widest shrink-0">今日重點</label>
+    <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2">
+            <span class="text-base select-none shrink-0">✨</span>
+            <label class="text-[11px] font-bold text-[#8c8577] uppercase tracking-widest shrink-0">今日重點</label>
+        </div>
+        <button @click="openDayRouteInGoogleMaps" class="flex items-center gap-1 text-[10px] font-bold text-blue-500/80 hover:text-blue-700 px-2 py-1 border border-blue-200 rounded-md cursor-pointer hover:bg-blue-50 shrink-0 transition-colors" title="Google Maps 開啟整日路線">
+            <i data-lucide="map" class="w-3.5 h-3.5"></i>整日路線
+        </button>
     </div>
     <textarea
         :value="getDayHighlight(selectedDay)"
@@ -922,6 +1103,12 @@ body {
       class="flex items-center gap-1 text-[10px] border px-1.5 py-0.5 rounded-md font-bold">
     <i :data-lucide="getItineraryTypeStyle(item.type).icon" class="w-3 h-3"></i>{{ item.type }}
 </span>
+
+<span v-if="item.city" :class="getCityColorClass(item.city)"
+    class="text-[10px] border px-1.5 py-0.5 rounded-md font-bold">
+    🏙 {{ item.city }}
+</span>
+
                 <i v-if="idx > 0" :data-lucide="isItineraryExpanded(item, idx) ? 'chevron-up' : 'chevron-down'" class="w-3.5 h-3.5 text-[#a8a297]"></i>
             </div>
             <div class="flex items-center space-x-2">
@@ -981,6 +1168,7 @@ body {
             <i data-lucide="navigation" class="w-3.5 h-3.5"></i>
         </a>
     </div>
+
 </div>
 
 
@@ -991,7 +1179,72 @@ body {
 
 
 </div>
+<!-- 移日 Modal -->
+<div v-if="moveDayModal.isOpen"
+    class="fixed inset-0 z-50 bg-black/50 flex items-end justify-center"
+    @click.self="moveDayModal.isOpen = false">
+    <div class="bg-[#faf8f5] rounded-t-3xl w-full max-w-lg p-6 space-y-4 shadow-2xl">
 
+        <!-- 標題列 -->
+        <div class="flex justify-between items-center">
+            <h3 class="text-sm font-bold text-[#4a463f] flex items-center gap-2">
+                <i data-lucide="move-horizontal" class="w-4 h-4 text-[#8c8577]"></i>
+                整天行程移日
+            </h3>
+            <button @click="moveDayModal.isOpen = false" class="text-[#a8a297] hover:text-[#5c554a]">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- 說明 -->
+        <p class="text-[11px] text-[#8c8577] font-bold">
+            將「第 <span class="highlight-yellow text-[#4a463f] px-1">{{ moveDayModal.fromDay }}</span> 天」的所有行程、重點及相片移至：
+        </p>
+
+        <!-- 目標天數選擇 -->
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <button v-for="day in 26" :key="day"
+                v-if="day !== moveDayModal.fromDay"
+                @click="moveDayModal.toDay = day"
+                :class="moveDayModal.toDay === day
+                    ? 'highlight-yellow border-2 border-[#5c554a] font-bold text-[#4a463f]'
+                    : 'sketch-btn text-[#736c60]'"
+                class="px-3 py-1.5 text-xs rounded-xl whitespace-nowrap transition-all shrink-0">
+                第 {{ day }} 天
+            </button>
+        </div>
+
+        <!-- 預覽說明 -->
+        <div v-if="moveDayModal.toDay"
+            class="bg-[#eae5da]/60 rounded-xl p-3 border border-[#5c554a]/20 space-y-1 text-[11px] font-bold text-[#5c554a]">
+            <p>✦ 移動後的結果：</p>
+            <template v-if="moveDayModal.fromDay < moveDayModal.toDay">
+                <p>· 第 {{ moveDayModal.fromDay }} 天 ──▶ 第 {{ moveDayModal.toDay }} 天</p>
+                <p>· 第 {{ moveDayModal.fromDay + 1 }} ～ 第 {{ moveDayModal.toDay }} 天，各往前移一天</p>
+            </template>
+            <template v-else>
+                <p>· 第 {{ moveDayModal.fromDay }} 天 ──▶ 第 {{ moveDayModal.toDay }} 天</p>
+                <p>· 第 {{ moveDayModal.toDay }} ～ 第 {{ moveDayModal.fromDay - 1 }} 天，各往後移一天</p>
+            </template>
+        </div>
+        <div v-else class="text-[11px] text-[#a8a297] font-bold text-center py-1">
+            請選擇要移至的目標天數 ↑
+        </div>
+
+        <!-- 按鈕 -->
+        <div class="flex gap-3 pt-1">
+            <button @click="moveDayModal.isOpen = false"
+                class="flex-1 sketch-btn text-xs font-bold py-2.5">
+                取消
+            </button>
+            <button @click="confirmMoveDay"
+                :disabled="!moveDayModal.toDay"
+                class="flex-1 py-2.5 text-xs font-bold rounded-xl bg-[#4a463f] text-[#faf8f5] disabled:opacity-30 transition-all active:scale-95">
+                ✓ 確認移日
+            </button>
+        </div>
+    </div>
+</div>
 </div>
 
 <!-- 旅居資源 TAB -->
@@ -1248,6 +1501,64 @@ body {
     </div>
 </div>
 
+<!-- 旅行通用分類 Checklist ─────────────────────── -->
+<div class="sketch-card p-4 space-y-3 relative">
+    <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">TRAVEL CHECKLIST</div>
+
+    <!-- 標題 + 全局進度 + 重設按鈕 -->
+    <div class="flex items-center justify-between pt-1">
+        <div class="flex items-center gap-2">
+            <span class="text-[11px] font-bold text-[#4a463f] uppercase tracking-wide">✈ 旅行通用清單</span>
+            <span class="text-[10px] text-[#a8a297] font-bold">{{ tripClProgress.done }}/{{ tripClProgress.total }}</span>
+        </div>
+        <button @click="resetTripClCat"
+            class="flex items-center gap-1 text-[10px] text-[#a8a297] hover:text-red-500 font-bold transition-colors">
+            <i data-lucide="rotate-ccw" class="w-3 h-3"></i>重設此類
+        </button>
+    </div>
+
+    <!-- 全局進度條 -->
+    <div class="w-full bg-[#eae5da] rounded-full h-1.5">
+        <div class="h-1.5 rounded-full transition-all duration-500"
+             :style="`width:${tripClProgress.pct}%;background:${tripClProgress.pct>=100?'#5c7a4a':'#5c554a'}`">
+        </div>
+    </div>
+
+    <!-- 分類 Tab 按鈕 -->
+    <div class="flex flex-wrap gap-1.5">
+        <button v-for="cat in TRIP_CL_CATS" :key="cat.key"
+            @click="tripClCat = cat.key"
+            :class="tripClCat === cat.key
+                ? 'bg-[#5c554a] text-[#fffdf9] border-[#5c554a]'
+                : 'bg-transparent text-[#5c554a] border-[#5c554a]/40 hover:border-[#5c554a] hover:bg-[#eae5da]'"
+            class="text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all">
+            {{ cat.emoji }} {{ cat.label }}
+        </button>
+    </div>
+
+    <!-- 項目列表 -->
+    <div class="space-y-1 max-h-64 overflow-y-auto no-scrollbar">
+        <div v-for="item in filteredTripCl" :key="item.id"
+            class="flex items-center gap-2.5 px-2 py-1.5 rounded-xl cursor-pointer select-none transition-colors"
+            :class="tripClChecked[item.id] ? 'opacity-50' : 'hover:bg-[#f8f6f1]'"
+            @click="toggleTripClItem(item.id)">
+            <span class="w-5 h-5 rounded border border-[#5c554a] flex items-center justify-center shrink-0 transition-colors"
+                :class="tripClChecked[item.id] ? 'bg-[#5c554a] text-white' : 'bg-transparent'">
+                <i v-if="tripClChecked[item.id]" data-lucide="check" class="w-3 h-3"></i>
+            </span>
+            <span class="text-xs font-bold text-[#4a463f] transition-all"
+                :class="{'line-through text-[#a8a297]': tripClChecked[item.id]}">
+                {{ item.label }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- 自訂清單 分隔線 -->
+<div class="flex items-center gap-2">
+    <span class="text-[10px] font-bold text-[#a8a297] uppercase tracking-wider whitespace-nowrap">✏️ 自訂清單</span>
+    <span class="flex-1 border-t border-dashed border-[#5c554a]/20"></span>
+</div>
 
     <div v-for="(item, idx) in checklist" :key="item.id" 
          class="sketch-card p-3.5 flex justify-between items-center transition-all"
@@ -1318,6 +1629,10 @@ body {
                 <span class="font-mono">{{ b.orderNo }}</span>
             </div>
             <p v-if="b.note" class="text-xs text-[#a8a297] whitespace-pre-line bg-[#fff] p-2 rounded-lg border border-[#5c554a]/20">{{ b.note }}</p>
+<a v-if="b.pdfUrl" :href="b.pdfUrl" target="_blank"
+    class="flex items-center gap-2 text-xs text-blue-600 font-bold bg-[#f0f4ff] border border-blue-200 rounded-xl px-3 py-2 hover:bg-blue-50 transition-colors">
+    <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>查看機票 PDF
+</a>
         </div>
     </div>
 </div>
@@ -1355,6 +1670,10 @@ body {
                 <span class="font-mono">{{ b.orderNo }}</span>
             </div>
             <p v-if="b.note" class="text-xs text-[#a8a297] font-bold whitespace-pre-line bg-[#fff] p-2 rounded-lg border border-[#5c554a]/20">{{ b.note }}</p>
+<a v-if="b.pdfUrl" :href="b.pdfUrl" target="_blank"
+    class="flex items-center gap-2 text-xs text-blue-600 font-bold bg-[#f0f4ff] border border-blue-200 rounded-xl px-3 py-2 hover:bg-blue-50 transition-colors">
+    <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>查看住宿確認單 PDF
+</a>
         </div>
     </div>
 </div>
@@ -1467,6 +1786,24 @@ body {
     <div v-if="isBackupExpanded(idx) && !backupItinerariesByDay(27 + idx).length" class="text-center py-4 text-[10px] text-[#a8a297] italic font-bold">
         🍂 此備案手帳內目前沒有任何想法。
     </div>
+<!-- Claude API Key 設定 -->
+<div class="sketch-card p-5 space-y-3">
+    <h3 class="text-xs uppercase tracking-wider text-[#4a463f] font-bold border-b-2 border-dashed border-[#5c554a]/30 pb-2 flex items-center gap-2">
+        <i data-lucide="key" class="w-3.5 h-3.5"></i>Claude AI 金鑰
+        <span class="ml-auto text-[10px] text-[#a8a297] font-normal normal-case">天氣行程建議使用</span>
+    </h3>
+    <p class="text-[10px] text-[#a8a297] font-bold leading-relaxed">
+        填入 Anthropic Claude API Key 後，可在首頁使用「AI 天氣行程建議」。金鑰僅存於本機，不會上傳。
+    </p>
+    <div class="flex gap-2 items-center">
+        <input type="password" v-model="claudeApiKey" placeholder="sk-ant-api03-..."
+            class="flex-1 sketch-input px-3 py-1.5 text-xs font-mono focus:outline-none text-[#4a463f] placeholder-[#c4beaf]">
+        <span v-if="claudeApiKey" class="text-[10px] text-green-600 font-bold shrink-0">✓ 已設定</span>
+    </div>
+    <p class="text-[9px] text-[#a8a297] font-bold">
+        取得金鑰：<a href="https://console.anthropic.com" target="_blank" class="underline underline-offset-2">console.anthropic.com</a>
+    </p>
+</div>
 </div>
 <div v-if="!backupDayLabels.length" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
     📓 尚未設定備案行程。
@@ -1706,22 +2043,27 @@ body {
                 <input type="text" v-model="itineraryForm.time" class="w-full sketch-input p-2 text-sm focus:outline-none">
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-3 gap-3">
             <div>
                 <label class="text-[10px] text-[#a8a297] font-bold block mb-1">項目名稱</label>
                 <input type="text" v-model="itineraryForm.title" class="w-full sketch-input p-2 text-sm focus:outline-none">
             </div>
             <div>
-    <label class="text-[10px] text-[#a8a297] font-bold block mb-1">類型</label>
-    <select v-model="itineraryForm.type" class="w-full sketch-input p-2 text-sm focus:outline-none">
-        <option value="景點">📍 景點</option>
-        <option value="餐廳">🍜 餐廳</option>
-        <option value="交通">🚃 交通</option>
-        <option value="其他">📌 其他</option>
-    </select>
-</div>
-
+                <label class="text-[10px] text-[#a8a297] font-bold block mb-1">類型</label>
+                <select v-model="itineraryForm.type" class="w-full sketch-input p-2 text-sm focus:outline-none">
+                    <option value="景點">📍 景點</option>
+                    <option value="餐廳">🍜 餐廳</option>
+                    <option value="交通">🚃 交通</option>
+                    <option value="其他">📌 其他</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] text-[#a8a297] font-bold block mb-1">城市</label>
+                <input type="text" v-model="itineraryForm.city" placeholder="如 東京、首爾..."
+                    class="w-full sketch-input p-2 text-sm focus:outline-none">
+            </div>
         </div>
+
        <div class="grid grid-cols-2 gap-3">
             <div>
                 <label class="text-[10px] text-[#a8a297] font-bold block mb-1">📍 定位連結 (Google Maps 景點)</label>
@@ -1943,6 +2285,23 @@ body {
         <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">回程時間資訊</label>
         <input type="text" v-model="bookingForm.returnFlight" placeholder="例：FUK→TPE 12:30" class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
     </div>
+<div>
+    <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">✈ 機票 PDF</label>
+    <div class="space-y-1.5">
+        <a v-if="bookingForm.pdfUrl" :href="bookingForm.pdfUrl" target="_blank"
+            class="flex items-center gap-2 text-xs text-blue-600 font-bold bg-[#f0f4ff] border border-blue-200 rounded-xl px-3 py-2 hover:bg-blue-50 transition-colors">
+            <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>
+            <span class="truncate">查看機票 PDF</span>
+        </a>
+        <label class="flex items-center justify-center gap-2 w-full py-2 bg-[#fcfaf4] border-2 border-dashed border-[#5c554a]/30 rounded-xl text-xs text-[#a8a297] cursor-pointer hover:border-[#5c554a] transition-colors font-bold">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            {{ bookingPdfUploading ? '上傳中...' : (bookingForm.pdfUrl ? '更換 PDF' : '上傳機票 PDF') }}
+            <input type="file" accept="application/pdf" class="hidden" :disabled="bookingPdfUploading" @change="onBookingPdfSelected" />
+        </label>
+        <button v-if="bookingForm.pdfUrl" @click="bookingForm.pdfUrl=''; bookingForm.pdfPath=''"
+            class="text-[10px] text-red-500 font-bold hover:underline">✕ 移除 PDF</button>
+    </div>
+</div>
 </template>
 
 <template v-if="bookingForm.type === 'hotel'">
@@ -1968,6 +2327,23 @@ body {
             <input type="date" v-model="bookingForm.checkOut" class="w-full sketch-input p-2 text-sm focus:outline-none" />
         </div>
     </div>
+<div>
+    <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">🏨 住宿確認單 PDF</label>
+    <div class="space-y-1.5">
+        <a v-if="bookingForm.pdfUrl" :href="bookingForm.pdfUrl" target="_blank"
+            class="flex items-center gap-2 text-xs text-blue-600 font-bold bg-[#f0f4ff] border border-blue-200 rounded-xl px-3 py-2 hover:bg-blue-50 transition-colors">
+            <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>
+            <span class="truncate">查看住宿確認單 PDF</span>
+        </a>
+        <label class="flex items-center justify-center gap-2 w-full py-2 bg-[#fcfaf4] border-2 border-dashed border-[#5c554a]/30 rounded-xl text-xs text-[#a8a297] cursor-pointer hover:border-[#5c554a] transition-colors font-bold">
+            <i data-lucide="upload" class="w-4 h-4"></i>
+            {{ bookingPdfUploading ? '上傳中...' : (bookingForm.pdfUrl ? '更換 PDF' : '上傳住宿確認 PDF') }}
+            <input type="file" accept="application/pdf" class="hidden" :disabled="bookingPdfUploading" @change="onBookingPdfSelected" />
+        </label>
+        <button v-if="bookingForm.pdfUrl" @click="bookingForm.pdfUrl=''; bookingForm.pdfPath=''"
+            class="text-[10px] text-red-500 font-bold hover:underline">✕ 移除 PDF</button>
+    </div>
+</div>
 </template>
 
 <template v-if="bookingForm.type === 'ticket'">
@@ -2113,13 +2489,10 @@ body {
         <i data-lucide="home" class="w-4 h-4 lg:w-5 lg:h-5"></i>
         <span class="text-[8px] lg:text-[11px] truncate w-full">首頁</span>
     </button>
-    <button @click="switchTab('scan')" :class="textClass('scan')" class="flex flex-col items-center space-y-0.5 flex-1 min-w-0">
-        <i data-lucide="scan" class="w-4 h-4 lg:w-5 lg:h-5"></i>
-        <span class="text-[8px] lg:text-[11px] truncate w-full">手寫相機</span>
-    </button>
+    
     <button @click="switchTab('records')" :class="textClass('records')" class="flex flex-col items-center space-y-0.5 flex-1 min-w-0">
         <i data-lucide="file-text" class="w-4 h-4 lg:w-5 lg:h-5"></i>
-        <span class="text-[8px] lg:text-[11px] truncate w-full">開銷手帳</span>
+        <span class="text-[8px] lg:text-[11px] truncate w-full">記帳</span>
     </button>
     <button @click="switchTab('itinerary')" :class="textClass('itinerary')" class="flex flex-col items-center space-y-0.5 flex-1 min-w-0">
         <i data-lucide="map-pin" class="w-4 h-4 lg:w-5 lg:h-5"></i>
@@ -2156,13 +2529,115 @@ body {
     // ★ 範例清空：將原有的範例行程改為完全空白
     const EXCEL_ITINERARIES = [];
 
+// ── 旅行通用分類清單（靜態資料）──────────────────────────
+const STANDARD_TRAVEL_CHECKLIST = [
+    // A. 出發前
+    { id:'pre_01', cat:'A', label:'護照（效期 6 個月以上）' },
+    { id:'pre_02', cat:'A', label:'機票（電子機票已存手機）' },
+    { id:'pre_03', cat:'A', label:'住宿訂單確認' },
+    { id:'pre_04', cat:'A', label:'旅遊保險' },
+    { id:'pre_05', cat:'A', label:'Swiss Travel Pass（或當地交通票券）' },
+    { id:'pre_06', cat:'A', label:'信用卡（至少 2 張，含 VISA / Master）' },
+    { id:'pre_07', cat:'A', label:'少量當地現金' },
+    { id:'pre_08', cat:'A', label:'eSIM 或漫遊方案已啟用' },
+    { id:'pre_09', cat:'A', label:'App 離線地圖已下載（Maps.me / Google）' },
+    { id:'pre_10', cat:'A', label:'SBB App（或當地交通 App）已安裝' },
+    { id:'pre_11', cat:'A', label:'電子簽證 / ETA（如需申請）' },
+    { id:'pre_12', cat:'A', label:'重要文件備份至雲端（護照、機票、保險）' },
+    { id:'pre_13', cat:'A', label:'海外急難救助服務電話已記錄' },
+    // B1. 衣物
+    { id:'cl_01', cat:'B1', label:'快乾短袖 × 4' },
+    { id:'cl_02', cat:'B1', label:'長袖排汗衣 × 2' },
+    { id:'cl_03', cat:'B1', label:'保暖中層（抓絨或羽絨）× 2' },
+    { id:'cl_04', cat:'B1', label:'防水防風外套 × 1' },
+    { id:'cl_05', cat:'B1', label:'長褲 × 2' },
+    { id:'cl_06', cat:'B1', label:'輕便短褲 × 1' },
+    { id:'cl_07', cat:'B1', label:'睡衣 × 1' },
+    { id:'cl_08', cat:'B1', label:'內衣褲 × 5～6 套' },
+    { id:'cl_09', cat:'B1', label:'襪子 × 5～6 雙' },
+    { id:'cl_10', cat:'B1', label:'帽子（防曬或防寒）' },
+    { id:'cl_11', cat:'B1', label:'圍巾或薄披巾' },
+    // B2. 鞋類
+    { id:'sh_01', cat:'B2', label:'防滑運動鞋' },
+    { id:'sh_02', cat:'B2', label:'拖鞋（室內用）' },
+    // B3. 電子用品
+    { id:'el_01', cat:'B3', label:'手機（已確認充電）' },
+    { id:'el_02', cat:'B3', label:'充電器（手機 / 相機）' },
+    { id:'el_03', cat:'B3', label:'Type-C / Lightning 傳輸線' },
+    { id:'el_04', cat:'B3', label:'行動電源' },
+    { id:'el_05', cat:'B3', label:'萬國轉接頭（確認當地插頭規格）' },
+    { id:'el_06', cat:'B3', label:'相機 + 備用電池（如攜帶）' },
+    { id:'el_07', cat:'B3', label:'記憶卡（多備一張）' },
+    { id:'el_08', cat:'B3', label:'筆電或平板（如攜帶）' },
+    { id:'el_09', cat:'B3', label:'耳機 / 藍牙耳機' },
+    // B4. 常備藥
+    { id:'md_01', cat:'B4', label:'感冒藥' },
+    { id:'md_02', cat:'B4', label:'腸胃藥（止瀉 + 消脹氣）' },
+    { id:'md_03', cat:'B4', label:'止痛藥（普拿疼等）' },
+    { id:'md_04', cat:'B4', label:'OK 繃 + 防水繃帶' },
+    { id:'md_05', cat:'B4', label:'暈車藥（如需要）' },
+    { id:'md_06', cat:'B4', label:'個人處方藥（含英文藥名說明）' },
+    { id:'md_07', cat:'B4', label:'防曬乳 SPF 50+' },
+    { id:'md_08', cat:'B4', label:'防蚊液（如需）' },
+    // C. 每日出門前
+    { id:'go_01', cat:'C', label:'護照（確認帶走）' },
+    { id:'go_02', cat:'C', label:'Swiss Travel Pass / 票券' },
+    { id:'go_03', cat:'C', label:'信用卡' },
+    { id:'go_04', cat:'C', label:'現金' },
+    { id:'go_05', cat:'C', label:'手機（電量確認）' },
+    { id:'go_06', cat:'C', label:'行動電源' },
+    { id:'go_07', cat:'C', label:'充電線' },
+    { id:'go_08', cat:'C', label:'相機' },
+    { id:'go_09', cat:'C', label:'水壺（環保減塑）' },
+    { id:'go_10', cat:'C', label:'雨具（折傘或雨衣）' },
+    { id:'go_11', cat:'C', label:'保暖外套（視天氣確認）' },
+    { id:'go_12', cat:'C', label:'太陽眼鏡' },
+    { id:'go_13', cat:'C', label:'防曬乳已塗抹' },
+    { id:'go_14', cat:'C', label:'確認今日行程 & 交通路線' },
+    // D. 離開飯店
+    { id:'ht_01', cat:'D', label:'護照是否帶走' },
+    { id:'ht_02', cat:'D', label:'房卡歸還（退房時）' },
+    { id:'ht_03', cat:'D', label:'行李全部帶齊' },
+    { id:'ht_04', cat:'D', label:'冰箱是否有遺留物品' },
+    { id:'ht_05', cat:'D', label:'插座是否有充電器未拔' },
+    { id:'ht_06', cat:'D', label:'床頭 / 桌面 / 衛浴是否有遺留物' },
+    { id:'ht_07', cat:'D', label:'保險箱是否已清空' },
+    // E. 搭車前
+    { id:'tr_01', cat:'E', label:'確認月台號碼' },
+    { id:'tr_02', cat:'E', label:'確認車次與發車時間' },
+    { id:'tr_03', cat:'E', label:'行李放妥（不占走道）' },
+    { id:'tr_04', cat:'E', label:'確認中途是否需轉乘，及轉乘站名' },
+    { id:'tr_05', cat:'E', label:'確認目的地下車站' },
+    { id:'tr_06', cat:'E', label:'離線地圖已下載（無網路備用）' },
+    // F. 回飯店後
+    { id:'bk_01', cat:'F', label:'照片備份（手機 → 雲端 / 電腦）' },
+    { id:'bk_02', cat:'F', label:'手機 / 相機 / 行動電源充電' },
+    { id:'bk_03', cat:'F', label:'查看隔天天氣' },
+    { id:'bk_04', cat:'F', label:'整理行李以備明日出門' },
+    { id:'bk_05', cat:'F', label:'確認隔天第一班車次時間' },
+    { id:'bk_06', cat:'F', label:'記錄今日重要消費（記帳）' },
+    { id:'bk_07', cat:'F', label:'確認隔天早餐 / 首站行程' },
+];
+
+const TRIP_CL_CATS = [
+    { key:'A',  emoji:'✈', label:'出發前' },
+    { key:'B1', emoji:'👕', label:'衣物' },
+    { key:'B2', emoji:'👟', label:'鞋類' },
+    { key:'B3', emoji:'📱', label:'電子' },
+    { key:'B4', emoji:'💊', label:'常備藥' },
+    { key:'C',  emoji:'🚪', label:'出門前' },
+    { key:'D',  emoji:'🏨', label:'離開飯店' },
+    { key:'E',  emoji:'🚃', label:'搭車前' },
+    { key:'F',  emoji:'🌙', label:'回飯店' },
+];
+
     createApp({
         setup() {
             const currentTab = ref('home');
             const selectedDay = ref(1);
             const resourceTab = ref('japanese');
             const recordsViewMode = ref('date');
-
+const recordsSubTab = ref('list');
             const newCategoryName = ref('');
             const newPayMethodName = ref('');
 
@@ -2299,6 +2774,18 @@ const dayWeatherError = ref('');
                 const days = Math.round((b - a) / 86400000) + 1;
                 return days > 0 ? `共 ${days} 天` : '';
             });
+
+const daysUntilDeparture = computed(() => {
+    if (!tripInfo.value.startDate) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(tripInfo.value.startDate);
+    start.setHours(0, 0, 0, 0);
+    const diff = Math.ceil((start - today) / 86400000);
+    if (diff > 0) return `✈️ 距離出發還有 ${diff} 天`;
+    if (diff === 0) return '🛫 今天出發！';
+    return `🌏 旅程進行中，已出發 ${Math.abs(diff)} 天`;
+});
 
             // WMO weather code
             const wmoToCondition = (code) => {
@@ -2557,8 +3044,61 @@ const expensePhotos = Vue.reactive(JSON.parse(localStorage.getItem(`${APP_ID}__e
             const checklistModal = ref({ isOpen: false, isEdit: false, currentIndex: null });
             const checklistForm = ref({ title: '', note: '' });
 
+// ── 通用清單狀態 ──
+const tripClChecked = Vue.reactive(
+    JSON.parse(localStorage.getItem(`${APP_ID}__trip_cl`) || '{}')
+);
+const tripClCat = ref('A');
+
+const filteredTripCl = computed(() =>
+    STANDARD_TRAVEL_CHECKLIST.filter(i => i.cat === tripClCat.value)
+);
+
+const tripClProgress = computed(() => {
+    const total = STANDARD_TRAVEL_CHECKLIST.length;
+    const done  = STANDARD_TRAVEL_CHECKLIST.filter(i => tripClChecked[i.id]).length;
+    return { done, total, pct: total ? Math.round(done / total * 100) : 0 };
+});
+
+const toggleTripClItem = (id) => {
+    tripClChecked[id] = !tripClChecked[id];
+    localStorage.setItem(`${APP_ID}__trip_cl`, JSON.stringify({...tripClChecked}));
+    saveToStorage();
+    nextTick(() => lucide.createIcons());
+};
+
+const resetTripClCat = () => {
+    const catInfo = TRIP_CL_CATS.find(c => c.key === tripClCat.value);
+    if (!confirm(`確定重設「${catInfo?.emoji} ${catInfo?.label}」的所有勾選？`)) return;
+    STANDARD_TRAVEL_CHECKLIST.filter(i => i.cat === tripClCat.value)
+        .forEach(i => { tripClChecked[i.id] = false; });
+    localStorage.setItem(`${APP_ID}__trip_cl`, JSON.stringify({...tripClChecked}));
+    saveToStorage();
+    showToast('此類別清單已重設');
+};
+
+// ── PDF 上傳（機票 / 住宿）──
+const bookingPdfUploading = ref(false);
+const onBookingPdfSelected = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    bookingPdfUploading.value = true;
+    try {
+        const path = `trips/${APP_ID}/pdfs/${Date.now()}_${file.name}`;
+        const url  = await window._storageUpload(path, file);
+        bookingForm.value.pdfUrl  = url;
+        bookingForm.value.pdfPath = path;
+        showToast('✅ PDF 已上傳成功');
+    } catch {
+        showToast('PDF 上傳失敗，請確認 Firebase Storage 是否已啟用');
+    } finally {
+        bookingPdfUploading.value = false;
+        e.target.value = '';
+    }
+};
+
             const itineraryModal = ref({ isOpen: false, isEdit: false, currentId: null });
-            const itineraryForm = ref({ day: 1, time: '', type: 'spot', title: '', transport: '', google: '', nav: '', note: '' });
+            const itineraryForm = ref({ day: 1, time: '', type: 'spot', title: '', city: '', transport: '', google: '', nav: '', note: '' });
             const resourceModal = ref({ isOpen: false, isEdit: false, currentId: null });
             const resourceForm = ref({ type: 'japanese', title: '', content: '' });
 const emergencyCityInput = ref(localStorage.getItem(`${APP_ID}__emergency_city`) || '');
@@ -2770,7 +3310,7 @@ const generateEntryInfo = async () => {
             const toast = ref({ show: false, message: '' });
 
             const currentTabTitle = computed(() => {
-                const titles = { home: '日常手記', scan: '手寫相機', records: '開銷手帳', itinerary: '行程漫遊', mapview: '手繪地圖', resources: '備忘資源', settings: '基礎格局' };
+                const titles = { home: '日常手記', scan: '掃描', records: '記帳', itinerary: '行程漫遊', mapview: '手繪地圖', resources: '備忘資源', settings: '基礎格局' };
                 return titles[currentTab.value];
             });
 
@@ -2836,6 +3376,8 @@ const generateEntryInfo = async () => {
                         if (oa !== ob) return oa - ob;
                         return String(a.time || '').localeCompare(String(b.time || ''));
                     });
+
+
                 const idx = dayItems.findIndex(i => i.id === id);
                 const swapIdx = idx + dir;
                 if (swapIdx < 0 || swapIdx >= dayItems.length) return;
@@ -2853,8 +3395,57 @@ const generateEntryInfo = async () => {
                 saveToStorage();
             };
 
+// ─── 整天行程移日 ──────────────────────────────────────────
+const moveDayModal = Vue.reactive({ isOpen: false, fromDay: 1, toDay: null });
+
+const openMoveDayModal = () => {
+    moveDayModal.fromDay = selectedDay.value;
+    moveDayModal.toDay = null;
+    moveDayModal.isOpen = true;
+};
+
+const confirmMoveDay = () => {
+    const from = moveDayModal.fromDay;
+    const to = moveDayModal.toDay;
+    if (!to || from === to) return;
+
+    const fromItems   = itineraries.value.filter(i => i.day === from);
+    const fromHL      = dayHighlights[from] || '';
+    const fromPhotos  = dayPhotos[from] ? [...dayPhotos[from]] : [];
+
+    if (from < to) {
+        for (let d = from + 1; d <= to; d++) {
+            itineraries.value.forEach(i => { if (i.day === d) i.day = d - 1; });
+            if (dayHighlights[d] !== undefined) dayHighlights[d - 1] = dayHighlights[d];
+            else delete dayHighlights[d - 1];
+            if (dayPhotos[d]?.length) dayPhotos[d - 1] = [...dayPhotos[d]];
+            else delete dayPhotos[d - 1];
+        }
+    } else {
+        for (let d = from - 1; d >= to; d--) {
+            itineraries.value.forEach(i => { if (i.day === d) i.day = d + 1; });
+            if (dayHighlights[d] !== undefined) dayHighlights[d + 1] = dayHighlights[d];
+            else delete dayHighlights[d + 1];
+            if (dayPhotos[d]?.length) dayPhotos[d + 1] = [...dayPhotos[d]];
+            else delete dayPhotos[d + 1];
+        }
+    }
+
+    fromItems.forEach(i => { i.day = to; });
+    if (fromHL) dayHighlights[to] = fromHL; else delete dayHighlights[to];
+    if (fromPhotos.length) dayPhotos[to] = fromPhotos; else delete dayPhotos[to];
+
+    localStorage.setItem(`${APP_ID}__day_highlights`, JSON.stringify(dayHighlights));
+    localStorage.setItem(`${APP_ID}__day_photos`,     JSON.stringify(dayPhotos));
+    saveToStorage();
+
+    selectedDay.value   = to;
+    moveDayModal.isOpen = false;
+    showToast(`✅ 第 ${from} 天已移至第 ${to} 天，中間天數已自動遞移！`);
+};
+
             const openAddBackupItineraryModal = () => {
-                itineraryForm.value = { day: 27, time: '12:00:00', type: 'spot', title: '', transport: '', google: '', nav: '', note: '' };
+               itineraryForm.value = { day: 27, time: '12:00:00', type: 'spot', title: '', city: '', transport: '', google: '', nav: '', note: '' };
                 itineraryModal.value = { isOpen: true, isEdit: false, currentId: null };
             };
 
@@ -2871,7 +3462,8 @@ const generateEntryInfo = async () => {
                 bookingForm.value = { type: t, title: '', orderNo: '', note: '',
                     flightNo: '', departure: '', returnFlight: '',
                     checkIn: '', checkOut: '', image: '',
-                    ticketEmoji: '🎫', category: '交通', useDate: '', useTime: '' };
+                    ticketEmoji: '🎫', category: '交通', useDate: '', useTime: '',
+    pdfUrl: '', pdfPath: '' };
                 bookingModal.value = { isOpen: true, isEdit: false, currentId: null };
                 nextTick(() => lucide.createIcons());
             };
@@ -3080,6 +3672,22 @@ const itineraryTypeStyleMap = {
 const getItineraryTypeStyle = (type) =>
     itineraryTypeStyleMap[type] || { icon: 'sticky-note', badge: 'bg-[#f2efe9] border-[#a8a297] text-[#8c8577]', border: 'border-l-4 border-l-[#a8a297]' };
 
+const CITY_COLOR_PALETTE = [
+    'bg-[#fde8e8] border-[#e8a0a0] text-[#a94040]',
+    'bg-[#fdeee0] border-[#e8b880] text-[#a96030]',
+    'bg-[#fdf8e0] border-[#d8c860] text-[#806020]',
+    'bg-[#e8f5e0] border-[#90c870] text-[#406030]',
+    'bg-[#e0f0f8] border-[#70b0d8] text-[#205890]',
+    'bg-[#ece0f8] border-[#b090d8] text-[#604090]',
+    'bg-[#f8e0f0] border-[#d890b8] text-[#904060]',
+    'bg-[#e0f8f8] border-[#70c8c8] text-[#206870]',
+];
+const getCityColorClass = (city) => {
+    if (!city) return '';
+    const hash = [...String(city)].reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return CITY_COLOR_PALETTE[hash % CITY_COLOR_PALETTE.length];
+};
+
  // ★ 時間僅顯示「時:分」，不顯示秒
             const formatTimeShort = (t) => (t || '').slice(0, 5);
 
@@ -3159,7 +3767,7 @@ const getShortDateByDay = (day) => {
                 _st=setTimeout(async()=>{
                     if(!window._uid){ window._saving=false; return; }
                     try{
-                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,day_photos:dayPhotos,trip_info:tripInfo.value,updatedAt:pendingTs});
+                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,day_photos:dayPhotos,trip_info:tripInfo.value,trip_cl:{...tripClChecked},updatedAt:pendingTs});
                     }
                     catch(e){console.warn('Firestore 同步手帳失敗',e);}
                     finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
@@ -3340,6 +3948,35 @@ if (d.day_photos) { Object.keys(dayPhotos).forEach(k => delete dayPhotos[k]); Ob
                     } catch(e) {}
                 }
                 return result;
+            };
+
+const openDayRouteInGoogleMaps = () => {
+                // 定義要排除的類型字串列表（不區分大小寫、去空白）
+                const excludeTypes = ['pass', 'transport', '交通'];
+                
+                const places = filteredItineraries.value
+                    .filter(item => {
+                        const type = (item.type || '').trim().toLowerCase();
+                        // 檢查 item.type 是否包含在排除列表中
+                        return !excludeTypes.some(ex => type === ex.toLowerCase());
+                    })
+                    .map(item => {
+                        const loc = extractLocationData(item);
+                        // 優先使用精確的經緯度，其次使用地名/標題
+                        if (loc.lat && loc.lng) return `${loc.lat},${loc.lng}`;
+                        return item.title;
+                    })
+                    .filter(Boolean);
+
+                if (places.length === 0) {
+                    showToast('今日無景點或餐廳可規劃路線');
+                    return;
+                }
+                
+                // 串接起所有景點
+                const waypoints = places.map(p => encodeURIComponent(p)).join('/');
+                const url = `https://www.google.com/maps/dir//${waypoints}`;
+                window.open(url, '_blank');
             };
 
             const geocodeItems = async (items) => {
@@ -3672,7 +4309,7 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
             const simulateScan = () => {};
 
             const openAddItineraryModal = () => {
-    itineraryForm.value = { day: selectedDay.value, time: '12:00:00', type: 'spot', title: '', transport: '', google: '', nav: '', note: '' };
+    itineraryForm.value = { day: selectedDay.value, time: '12:00:00', type: 'spot', title: '', city: '', transport: '', google: '', nav: '', note: '' };
     itineraryModal.value = { isOpen: true, isEdit: false, currentId: null };
 };
 
@@ -3783,8 +4420,8 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                     const headers = raw[headerRow].map(c => String(c).toLowerCase().trim());
                     const col = (name) => headers.findIndex(h => h === name || h.includes(name));
                      const iDay = col('day'), iTime = col('time'), iType = col('type'),
-                          iTitle = col('title'), iTransport = col('transport'),
-                          iGoogle = col('google'), iNav = col('nav'), iNote = col('note'),
+     iTitle = col('title'), iCity = col('city'), iTransport = col('transport'),
+     iGoogle = col('google'), iNav = col('nav'), iNote = col('note'),
                           iTransportDesc = headers.findIndex(h => h.includes('配置') || (h.includes('交通') && !h.includes('transport')));
 
                     if (iDay === -1 || iTitle === -1) {
@@ -3808,6 +4445,7 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                             time: iTime >= 0 ? fracToTime(r[iTime]) : '12:00:00',
                             type: iType >= 0 ? safe(r[iType]) : '',
                             title,
+city: iCity >= 0 ? safe(r[iCity]) : '',
                             transport: iTransportDesc >= 0 ? safe(r[iTransportDesc]) : (isNavUrl ? '' : rawTrans),
                             google: iGoogle >= 0 ? safe(r[iGoogle]) : '',
                             nav: iNav >= 0 ? safe(r[iNav]) : (isNavUrl ? rawTrans : ''),
@@ -3878,10 +4516,46 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                 nextTick(() => lucide.createIcons());
             };
 
+const exportItineraryExcel = () => {
+    if (!itineraries.value.length) { showToast('目前無行程資料可匯出'); return; }
+    const headers = ['day', 'time', 'type', 'city', 'title', 'transport', 'google', 'nav', 'note'];
+    const sorted = [...itineraries.value].sort((a, b) => a.day - b.day || (a.time || '').localeCompare(b.time || ''));
+    const rows = sorted.map(item => [
+        item.day,
+        (item.time || '').slice(0, 5),
+        item.type || '',
+        item.city || '',
+        item.title || '',
+        item.transport || '',
+        item.google || '',
+        item.nav || '',
+        item.note || '',
+    ]);
+    const wsData = [headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    ws['!cols'] = [
+        { wch: 5 }, { wch: 7 }, { wch: 8 }, { wch: 10 }, { wch: 26 },
+        { wch: 20 }, { wch: 38 }, { wch: 38 }, { wch: 28 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '行程手記');
+    // 每日重點 Sheet
+    const hlKeys = Object.keys(dayHighlights).filter(k => dayHighlights[k]);
+    if (hlKeys.length) {
+        const hlData = [['day', 'highlight'],
+            ...hlKeys.sort((a, b) => +a - +b).map(k => [+k, dayHighlights[k]])];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hlData), '每日重點');
+    }
+    const name = tripInfo.value.title || 'travel';
+    XLSX.writeFile(wb, `${name}_行程手記.xlsx`);
+    showToast('✅ 行程 Excel 已匯出！');
+};
+
             watch(selectedDay, () => nextTick(() => lucide.createIcons()));
 watch(selectedDay, (d) => fetchDayWeatherRange(d), { immediate: true });
 
             watch(currentTab, () => nextTick(() => lucide.createIcons()));
+watch(recordsSubTab, () => nextTick(() => lucide.createIcons()));
 
             const _loadCloud = (d) => {
                 if(!d)return;
@@ -3898,6 +4572,7 @@ watch(selectedDay, (d) => fetchDayWeatherRange(d), { immediate: true });
                 if(d.day_highlights){ Object.keys(dayHighlights).forEach(k=>delete dayHighlights[k]); Object.assign(dayHighlights,d.day_highlights); }
 if(d.day_photos){ Object.keys(dayPhotos).forEach(k=>delete dayPhotos[k]); Object.assign(dayPhotos,d.day_photos); }
                 if(d.trip_info){ tripInfo.value=d.trip_info; localStorage.setItem(`${APP_ID}__trip_info`,JSON.stringify(d.trip_info)); }
+if(d.trip_cl){ Object.keys(tripClChecked).forEach(k=>delete tripClChecked[k]); Object.assign(tripClChecked,d.trip_cl); localStorage.setItem(`${APP_ID}__trip_cl`,JSON.stringify(d.trip_cl)); }
                 nextTick(()=>lucide.createIcons());
             };
 
@@ -3927,9 +4602,232 @@ if(d.day_photos){ Object.keys(dayPhotos).forEach(k=>delete dayPhotos[k]); Object
             const appId = APP_ID;
             const appIdCollapsed = ref(false);
 
+// ─── Claude API 金鑰 ───────────────────────────────────
+const claudeApiKey = ref(localStorage.getItem(`${APP_ID}__claude_key`) || '');
+watch(claudeApiKey, (v) => localStorage.setItem(`${APP_ID}__claude_key`, v));
+
+// ─── 今日是旅程第幾天 ────────────────────────────────────
+const todayDayNumber = computed(() => {
+    if (!tripInfo.value.startDate) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const start = new Date(tripInfo.value.startDate); start.setHours(0, 0, 0, 0);
+    const diff = Math.round((today - start) / 86400000) + 1;
+    return diff >= 1 && diff <= 26 ? diff : null;
+});
+
+// ─── 今日行程列表（按時間排序）──────────────────────────
+const todayItineraries = computed(() => {
+    if (!todayDayNumber.value) return [];
+    return [...itineraries.value]
+        .filter(i => i.day === todayDayNumber.value)
+        .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+});
+
+const _nowHHMM = () => {
+    const n = new Date();
+    return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+};
+
+// ─── 下一個景點（含餐廳、活動）────────────────────────────
+const nextSpot = computed(() =>
+    todayItineraries.value.find(i =>
+        ['景點','spot','餐廳','meal','活動'].includes(i.type) &&
+        (i.time || '99:99').slice(0,5) >= _nowHHMM()
+    ) || null
+);
+
+// ─── 下一個交通──────────────────────────────────────────
+const nextTransport = computed(() =>
+    todayItineraries.value.find(i =>
+        ['交通','transport'].includes(i.type) &&
+        (i.time || '99:99').slice(0,5) >= _nowHHMM()
+    ) || null
+);
+
+// ─── 今日住宿 ───────────────────────────────────────────
+const todayAccommodation = computed(() =>
+    todayItineraries.value.find(i => ['住宿','hotel'].includes(i.type)) || null
+);
+
+// ─── 交通詳情（每個行程項目各自記錄）────────────────────
+const allTransitDetails = Vue.reactive(
+    JSON.parse(localStorage.getItem(`${APP_ID}__transit_v2`) || '{}')
+);
+watch(() => JSON.stringify(allTransitDetails), () => {
+    localStorage.setItem(`${APP_ID}__transit_v2`, JSON.stringify(allTransitDetails));
+});
+const setTransitField = (id, field, val) => {
+    if (!allTransitDetails[id]) allTransitDetails[id] = {};
+    allTransitDetails[id][field] = val;
+};
+
+// ─── AI 天氣行程建議 ─────────────────────────────────────
+const weatherSuggestion = ref('');
+const weatherSuggestionLoading = ref(false);
+const transitSuggestionLoading = ref(false);
+
+const fetchWeatherSuggestion = async () => {
+    if (!claudeApiKey.value) { showToast('請先至設定填入 Claude API Key'); return; }
+    weatherSuggestionLoading.value = true;
+    weatherSuggestion.value = '';
+    try {
+        const todayW = dayWeatherCache[todayDayNumber.value]
+            || weatherData.value[0] || weatherData2.value[0] || null;
+        const weatherStr = todayW
+            ? `天氣：${todayW.condition || ''}，氣溫：${todayW.tempRange || ''}，降雨機率：${todayW.pop || ''}`
+            : '（未查詢到今日天氣，請先在首頁氣象區輸入城市查詢）';
+        const itinStr = todayItineraries.value.length
+            ? todayItineraries.value.map(i =>
+                `${(i.time||'').slice(0,5)} [${i.type}] ${i.title}${i.city ? ' @'+i.city : ''}`
+              ).join('\n')
+            : '（今日行程尚未填寫）';
+        const prompt = `你是旅行助理，請根據以下資訊給建議。\n\n今日行程：\n${itinStr}\n\n今日天氣：${weatherStr}\n\n指示：\n1. 若天氣不佳（下雨、強風、酷熱 35°C 以上），請指出哪些行程受影響、建議取消或改成什麼，並附上 1~2 個替代室內景點（附 Google Maps 連結：https://www.google.com/maps/search/景點名稱）。\n2. 若天氣良好，只需回覆「✅ 天氣良好，維持原行程！」加一句鼓勵。\n\n請用繁體中文回覆，精簡不超過 150 字。`;
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': claudeApiKey.value,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 500,
+                messages: [{ role: 'user', content: prompt }],
+            }),
+        });
+        const data = await res.json();
+        weatherSuggestion.value = data.content?.[0]?.text || data.error?.message || '無法取得建議';
+    } catch (e) {
+        weatherSuggestion.value = '連線失敗，請確認 API Key 與網路狀態';
+    } finally {
+        weatherSuggestionLoading.value = false;
+    }
+};
+
+// ─── AI 交通建議 ─────────────────────────────────────────
+const fetchTransitSuggestion = async () => {
+    if (!claudeApiKey.value) { showToast('請先至設定填入 Claude API Key'); return; }
+    if (!nextTransport.value) return;
+    transitSuggestionLoading.value = true;
+    const item = nextTransport.value;
+    const now = _nowHHMM();
+    const passed = todayItineraries.value.filter(i =>
+        ['景點','spot','餐廳','meal','活動'].includes(i.type) &&
+        (i.time || '99:99').slice(0,5) < now
+    );
+    const fromTitle = passed.length ? passed[passed.length - 1].title : '當前位置';
+    const prompt = `你是日本旅行交通顧問。旅客即將搭乘以下交通：\n\n交通名稱：${item.title}\n出發時間：${(item.time||'').slice(0,5)}\n城市：${item.city||'未知'}\n從：${fromTitle}\n備注：${item.note||'無'}\n\n請以純 JSON 格式回覆，不要加任何 Markdown 符號或說明文字：\n{\n  "trainNo": "車次號碼或路線名稱",\n  "platform": "月台號碼（不確定請填 建議現場確認）",\n  "earlyMin": "建議提早到站時間（如 15 分鐘前）",\n  "luggage": "行李空間：有 / 普通 / 有限",\n  "transfer": "是否需轉車（是，需在 XX 站轉乘 / 否）",\n  "warning": "重要注意事項（一句話）"\n}`;
+    try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': claudeApiKey.value,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true',
+            },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-6',
+                max_tokens: 400,
+                messages: [{ role: 'user', content: prompt }],
+            }),
+        });
+        const data = await res.json();
+        const text = (data.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(text);
+        if (!allTransitDetails[item.id]) allTransitDetails[item.id] = {};
+        Object.assign(allTransitDetails[item.id], parsed);
+        showToast('✅ AI 交通建議已填入！');
+    } catch (e) {
+        showToast('AI 建議失敗，請確認 API Key 或網路');
+    } finally {
+        transitSuggestionLoading.value = false;
+    }
+};
+
+// ─── 無 API Key 備用方案 ──────────────────────────────────
+const weatherPasteBuffer = ref('');
+const transitPasteBuffer = ref('');
+
+const _buildWeatherPrompt = () => {
+    const todayW = dayWeatherCache[todayDayNumber.value]
+        || weatherData.value[0] || weatherData2.value[0] || null;
+    const weatherStr = todayW
+        ? `天氣：${todayW.condition||''}，氣溫：${todayW.tempRange||''}，降雨機率：${todayW.pop||''}`
+        : '（請先在首頁查詢天氣）';
+    const itinStr = todayItineraries.value.length
+        ? todayItineraries.value.map(i =>
+            `${(i.time||'').slice(0,5)} [${i.type}] ${i.title}${i.city?' @'+i.city:''}`
+          ).join('\n')
+        : '（今日行程尚未填寫）';
+    return `你是旅行助理，請根據以下資訊給建議。\n\n今日行程：\n${itinStr}\n\n今日天氣：${weatherStr}\n\n指示：\n1. 若天氣不佳（下雨、強風、酷熱 35°C 以上），指出哪些行程受影響、建議取消或改成什麼，並推薦 1~2 個替代室內景點。\n2. 若天氣良好，只需回覆「✅ 天氣良好，維持原行程！」加一句鼓勵。\n\n請用繁體中文，精簡不超過 150 字。`;
+};
+
+const copyWeatherPrompt = async () => {
+    try {
+        await navigator.clipboard.writeText(_buildWeatherPrompt());
+        showToast('✅ 天氣建議提示詞已複製！請開啟 Claude.ai 貼上，再把回覆貼回下方');
+    } catch { showToast('複製失敗，請手動複製'); }
+};
+
+const applyWeatherPaste = () => {
+    if (!weatherPasteBuffer.value.trim()) return;
+    weatherSuggestion.value = weatherPasteBuffer.value.trim();
+    weatherPasteBuffer.value = '';
+    showToast('✅ 天氣建議已套用！');
+};
+
+const _buildTransitPrompt = () => {
+    if (!nextTransport.value) return '';
+    const item = nextTransport.value;
+    const passed = todayItineraries.value.filter(i =>
+        ['景點','spot','餐廳','meal','活動'].includes(i.type) &&
+        (i.time||'99:99').slice(0,5) < _nowHHMM()
+    );
+    const fromTitle = passed.length ? passed[passed.length-1].title : '當前位置';
+    return `你是旅行交通顧問。旅客即將搭乘以下交通：\n\n交通名稱：${item.title}\n出發時間：${(item.time||'').slice(0,5)}\n城市：${item.city||'未知'}\n從：${fromTitle}\n備注：${item.note||'無'}\n\n請以純 JSON 格式回覆，不要加任何 Markdown 或說明文字：\n{\n  "trainNo": "車次號碼或路線名稱",\n  "platform": "月台號碼（不確定請填 建議現場確認）",\n  "earlyMin": "建議提早到站（如 15 分鐘前）",\n  "luggage": "行李空間：有 / 普通 / 有限",\n  "transfer": "是否需轉車（是，需在 XX 站轉乘 / 否）",\n  "warning": "重要注意事項（一句話）"\n}`;
+};
+
+const copyTransitPrompt = async () => {
+    const p = _buildTransitPrompt();
+    if (!p) return;
+    try {
+        await navigator.clipboard.writeText(p);
+        showToast('✅ 交通提示詞已複製！請開啟 Claude.ai 貼上，再把 JSON 回覆貼回下方');
+    } catch { showToast('複製失敗，請手動複製'); }
+};
+
+const parseTransitPaste = () => {
+    if (!nextTransport.value || !transitPasteBuffer.value.trim()) return;
+    try {
+        const text = transitPasteBuffer.value.replace(/```json|```/g,'').trim();
+        const parsed = JSON.parse(text);
+        if (!allTransitDetails[nextTransport.value.id]) allTransitDetails[nextTransport.value.id] = {};
+        Object.assign(allTransitDetails[nextTransport.value.id], parsed);
+        transitPasteBuffer.value = '';
+        showToast('✅ 交通資訊已填入！');
+    } catch { showToast('格式錯誤，請確認貼上的是完整 JSON'); }
+};
+
+// ─── 附近超商 / 廁所（定位後開 Google Maps）────────────
+const openNearbySearch = (type) => {
+    const q = type === 'store' ? '超商 便利商店' : '廁所 公共廁所';
+    const go = (lat, lng) =>
+        window.open(`https://www.google.com/maps/search/${encodeURIComponent(q)}/@${lat},${lng},17z`, '_blank');
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            p => go(p.coords.latitude, p.coords.longitude),
+            () => window.open(`https://www.google.com/maps/search/${encodeURIComponent('附近'+q)}`, '_blank')
+        );
+    } else {
+        window.open(`https://www.google.com/maps/search/${encodeURIComponent('附近'+q)}`, '_blank');
+    }
+};
+
             return {
                 appId, appIdCollapsed,
-                currentTab, selectedDay, resourceTab, recordsViewMode,
+               currentTab, selectedDay, resourceTab, recordsViewMode, recordsSubTab,
                 weatherData, weatherCity, weatherCityInput, weatherLoading, weatherError,
                 weatherData2, weatherCity2, weatherCityInput2, weatherLoading2, weatherError2,
                 fetchWeather, fetchWeatherByCity, fetchWeatherByGPS,
@@ -3938,10 +4836,10 @@ if(d.day_photos){ Object.keys(dayPhotos).forEach(k=>delete dayPhotos[k]); Object
                 expenseModalOpen, expenseForm, itineraries, resources, itineraryModal, itineraryForm,
                 resourceModal, resourceForm, emergencyCityInput, emergencyInfo, emergencyLoading, emergencyError, generateEmergencyHandbook,phraseCityInput, phraseResult, phraseLoading, phraseError, generatePhrases,
 entryCityInput, entryResult, entryLoading, entryError, generateEntryInfo,toast, newCategoryName, newPayMethodName, currentTabTitle, grandTotalExpenses, todayTotal,
-                groupedExpensesByDate, groupedExpensesByCategory, filteredItineraries, filteredResources, tripInfo, tripInfoModal, tripInfoForm, tripDuration, openTripInfoModal, saveTripInfo, addCustomCategory, deleteCustomCategory, addCustomPayMethod, deleteCustomPayMethod, getTargetDateByDay, getCategorySpent,
-                getBudgetPercent, totalBudget, totalSpent, formatNumber, textClass, getWeatherIcon, getItineraryTypeStyle,
-dayWeatherCache, dayWeatherLoading, dayWeatherError, fetchDayWeather, fetchDayWeatherRange, getISODateByDay, getShortDateLabel,switchTab, openAddExpenseModal, submitExpense, deleteExpense, simulateScan, openAddItineraryModal, 
-                openEditItineraryModal, saveItinerary, deleteItinerary, moveItinerary, openAddResourceModal, openEditResourceModal, saveResource, deleteResource,
+                groupedExpensesByDate, groupedExpensesByCategory, filteredItineraries, filteredResources, tripInfo, tripInfoModal, tripInfoForm, tripDuration, daysUntilDeparture, openTripInfoModal, saveTripInfo, addCustomCategory, deleteCustomCategory, addCustomPayMethod, deleteCustomPayMethod, getTargetDateByDay, getCategorySpent,
+                getBudgetPercent, totalBudget, totalSpent, formatNumber, textClass, getWeatherIcon, getItineraryTypeStyle, getCityColorClass,
+dayWeatherCache, dayWeatherLoading, dayWeatherError, fetchDayWeather, fetchDayWeatherRange, getISODateByDay, getShortDateLabel,switchTab, openAddExpenseModal, submitExpense, deleteExpense, simulateScan, openAddItineraryModal, exportItineraryExcel,openDayRouteInGoogleMaps,
+                openEditItineraryModal, saveItinerary, deleteItinerary, moveItinerary,moveDayModal, openMoveDayModal, confirmMoveDay, openAddResourceModal, openEditResourceModal, saveResource, deleteResource,
                 checklist, checklistModal, checklistForm, toggleChecklistItem, openAddChecklistModal, openEditChecklistModal, saveChecklistItem, deleteChecklistItem, switchResourceSubTab,
                 bookings, bookingModal, bookingForm, bookingImageUploading, openAddBooking, openEditBooking, saveBooking, deleteBooking, onBookingImageSelected, dayPhotos, dayPhotoUploading, onDayPhotoSelected, deleteDayPhoto, backupDayLabels, backupItinerariesByDay, openAddBackupItineraryModal, expandedBackupIdxSet, toggleBackupExpand, isBackupExpanded, editingBackupLabelIdx, editingBackupLabelValue, startEditBackupLabel, saveBackupLabel, addToSchedulePicker, openAddToSchedule, confirmAddToSchedule,
                 scanPhoto, scanForm, onScanPhotoSelected, clearScanPhoto, submitScanExpense,
@@ -3954,7 +4852,14 @@ isModalCameraActive, startCameraForExpense, stopCameraForExpense, switchCameraFo
 expandedExpensePhotos, toggleExpensePhoto,
                 formatTimeShort, budgetsCollapsed, collapsedCategories, isCategoryCollapsed, toggleCategoryCollapse,
                 expandedItineraryIds, isItineraryExpanded, toggleItineraryExpand,
-                exportAllData, importAllData,hotelSectionCollapsed, passSectionCollapsed,hotelItineraries, passItineraries, getShortDateByDay
+                exportAllData, importAllData,hotelSectionCollapsed, claudeApiKey, todayDayNumber, todayItineraries, nextSpot, nextTransport,
+todayAccommodation, allTransitDetails, setTransitField,
+weatherSuggestion, weatherSuggestionLoading, fetchWeatherSuggestion,transitSuggestionLoading, fetchTransitSuggestion,weatherPasteBuffer, transitPasteBuffer,
+copyWeatherPrompt, applyWeatherPaste,
+copyTransitPrompt, parseTransitPaste,
+openNearbySearch, passSectionCollapsed,STANDARD_TRAVEL_CHECKLIST, TRIP_CL_CATS,
+tripClChecked, tripClCat, filteredTripCl, tripClProgress, toggleTripClItem, resetTripClCat,
+bookingPdfUploading, onBookingPdfSelected,hotelItineraries, passItineraries, getShortDateByDay
             };
 
         }
