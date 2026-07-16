@@ -1629,10 +1629,11 @@ body {
                 <span class="font-mono">{{ b.orderNo }}</span>
             </div>
             <p v-if="b.note" class="text-xs text-[#a8a297] whitespace-pre-line bg-[#fff] p-2 rounded-lg border border-[#5c554a]/20">{{ b.note }}</p>
-<a v-if="b.pdfUrl" :href="b.pdfUrl" target="_blank"
-    class="flex items-center gap-2 text-xs text-blue-600 font-bold bg-[#f0f4ff] border border-blue-200 rounded-xl px-3 py-2 hover:bg-blue-50 transition-colors">
-    <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>查看機票 PDF
-</a>
+<button v-if="b.pdfUrl" @click="openBookingPdf(b.pdfUrl)"
+    class="flex items-center gap-2 text-xs text-blue-600 font-bold bg-[#f0f4ff] border border-blue-200 rounded-xl px-3 py-2 hover:bg-blue-50 transition-colors w-full">
+    <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>
+    <span class="truncate">{{ b.pdfName || '查看機票 PDF' }}</span>
+</button>
         </div>
     </div>
 </div>
@@ -1670,10 +1671,11 @@ body {
                 <span class="font-mono">{{ b.orderNo }}</span>
             </div>
             <p v-if="b.note" class="text-xs text-[#a8a297] font-bold whitespace-pre-line bg-[#fff] p-2 rounded-lg border border-[#5c554a]/20">{{ b.note }}</p>
-<a v-if="b.pdfUrl" :href="b.pdfUrl" target="_blank"
-    class="flex items-center gap-2 text-xs text-blue-600 font-bold bg-[#f0f4ff] border border-blue-200 rounded-xl px-3 py-2 hover:bg-blue-50 transition-colors">
-    <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>查看住宿確認單 PDF
-</a>
+<button v-if="b.pdfUrl" @click="openBookingPdf(b.pdfUrl)"
+    class="flex items-center gap-2 text-xs text-blue-600 font-bold bg-[#f0f4ff] border border-blue-200 rounded-xl px-3 py-2 hover:bg-blue-50 transition-colors w-full">
+    <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>
+    <span class="truncate">{{ b.pdfName || '查看住宿確認 PDF' }}</span>
+</button>
         </div>
     </div>
 </div>
@@ -2299,6 +2301,12 @@ body {
             <input type="file" accept="application/pdf" class="hidden" :disabled="bookingPdfUploading" @change="onBookingPdfSelected" />
         </label>
         <button v-if="bookingForm.pdfUrl" @click="bookingForm.pdfUrl=''; bookingForm.pdfPath=''"
+<div class="flex items-center gap-2 mt-1">
+    <span class="text-[9px] text-[#a8a297] font-bold shrink-0">或貼連結：</span>
+    <input type="url" v-model="bookingForm.pdfUrl"
+        placeholder="https://drive.google.com/..."
+        class="flex-1 sketch-input px-2 py-1 text-[10px] focus:outline-none placeholder-[#c4beaf]" />
+</div>
             class="text-[10px] text-red-500 font-bold hover:underline">✕ 移除 PDF</button>
     </div>
 </div>
@@ -2341,6 +2349,12 @@ body {
             <input type="file" accept="application/pdf" class="hidden" :disabled="bookingPdfUploading" @change="onBookingPdfSelected" />
         </label>
         <button v-if="bookingForm.pdfUrl" @click="bookingForm.pdfUrl=''; bookingForm.pdfPath=''"
+<div class="flex items-center gap-2 mt-1">
+    <span class="text-[9px] text-[#a8a297] font-bold shrink-0">或貼連結：</span>
+    <input type="url" v-model="bookingForm.pdfUrl"
+        placeholder="https://drive.google.com/..."
+        class="flex-1 sketch-input px-2 py-1 text-[10px] focus:outline-none placeholder-[#c4beaf]" />
+</div>
             class="text-[10px] text-red-500 font-bold hover:underline">✕ 移除 PDF</button>
     </div>
 </div>
@@ -2393,6 +2407,117 @@ body {
 
 </div>
 
+<!-- 行程書 TAB ─────────────────────────────── -->
+<div v-if="currentTab === 'itinerarybook'" class="space-y-4 pb-2">
+
+    <!-- 控制列 -->
+    <div class="sketch-card p-4 space-y-3 relative">
+        <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">ITINERARY BOOK</div>
+        <div class="flex items-center justify-between pt-1">
+            <span class="text-xs font-bold text-[#4a463f]">📖 行程書輸出</span>
+            <button @click="printItineraryBook"
+                class="flex items-center gap-1.5 text-[11px] font-bold bg-[#3a3630] text-[#faf8f5] px-3 py-2 rounded-xl active:scale-95 transition-all">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i>列印 / PDF
+            </button>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+            <span class="text-[10px] text-[#a8a297] font-bold">紙張：</span>
+            <button v-for="sz in ['A4','A5']" :key="sz" @click="bookPageSize = sz"
+                :class="bookPageSize===sz ? 'bg-[#5c554a] text-[#fffdf9] border-[#5c554a]' : 'text-[#5c554a] border-[#5c554a]/40 hover:bg-[#eae5da]'"
+                class="text-[10px] font-bold px-3 py-1 rounded-lg border transition-all">{{ sz }}</button>
+            <span class="w-px h-4 bg-[#5c554a]/20 mx-1"></span>
+            <button @click="bookIncludeCover = !bookIncludeCover"
+                :class="bookIncludeCover ? 'bg-[#5c554a]/15 text-[#5c554a] border-[#5c554a]' : 'text-[#a8a297] border-[#5c554a]/20'"
+                class="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all">
+                <i :data-lucide="bookIncludeCover?'check-square':'square'" class="w-3 h-3"></i>封面
+            </button>
+            <button @click="bookIncludeBookings = !bookIncludeBookings"
+                :class="bookIncludeBookings ? 'bg-[#5c554a]/15 text-[#5c554a] border-[#5c554a]' : 'text-[#a8a297] border-[#5c554a]/20'"
+                class="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all">
+                <i :data-lucide="bookIncludeBookings?'check-square':'square'" class="w-3 h-3"></i>機票住宿
+            </button>
+        </div>
+        <p class="text-[10px] text-[#a8a297] font-bold">共 {{ bookDays.length }} 天 · 點「列印」開新視窗輸出 PDF（一天一頁）</p>
+    </div>
+
+    <!-- 無資料 -->
+    <div v-if="bookDays.length === 0"
+        class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/30">
+        📭 尚無行程資料，請先於「行程漫遊」新增行程
+    </div>
+
+    <!-- 封面預覽 -->
+    <div v-if="bookIncludeCover" class="rounded-2xl overflow-hidden shadow-md border-2 border-[#3a3630]">
+        <div class="bg-[#3a3630] text-[#faf8f5] px-6 py-8 text-center space-y-3">
+            <div class="text-5xl">{{ tripInfo.emoji || '✈️' }}</div>
+            <div class="text-xl font-black tracking-wider">{{ tripInfo.title || '旅遊手記' }}</div>
+            <div v-if="tripInfo.startDate" class="text-[11px] opacity-60">
+                {{ tripInfo.startDate }} ～ {{ tripInfo.endDate || '...' }}
+            </div>
+            <div v-if="citySummary.length" class="flex flex-wrap justify-center gap-2 pt-1">
+                <span v-for="c in citySummary" :key="c.city"
+                    class="text-[10px] font-bold px-3 py-1 rounded-full bg-white/20 border border-white/30">
+                    {{ c.city }} · {{ c.count }}天
+                </span>
+            </div>
+        </div>
+        <div class="bg-[#2a2620] py-1.5 text-center text-[9px] font-bold text-[#8c8577] tracking-widest">COVER</div>
+    </div>
+
+    <!-- 每日頁面預覽 -->
+    <div v-for="(day, idx) in bookDays" :key="day"
+        class="sketch-card overflow-hidden border border-[#5c554a]/30">
+
+        <!-- 頁頭 -->
+        <div class="flex items-center gap-3 p-4 bg-[#faf8f5] border-b-2 border-dashed border-[#5c554a]/25">
+            <div class="bg-[#3a3630] text-[#faf8f5] text-xs font-black px-3 py-1.5 rounded-lg shrink-0">DAY {{ day }}</div>
+            <div class="flex-1 min-w-0">
+                <div class="text-xs font-bold text-[#4a463f]">{{ getTargetDateByDay(day) }}</div>
+                <div class="flex flex-wrap gap-1 mt-1">
+                    <span v-for="city in [...new Set(getBookDayItems(day).map(i=>i.city).filter(Boolean))]" :key="city"
+                        :class="getCityColorClass(city)"
+                        class="text-[9px] font-bold px-1.5 py-0.5 rounded-md border">{{ city }}</span>
+                </div>
+            </div>
+            <span class="text-[9px] text-[#a8a297] font-bold shrink-0">{{ getBookDayItems(day).length }} 項</span>
+        </div>
+
+        <!-- 今日重點 -->
+        <div v-if="dayHighlights[day]" class="mx-4 mt-3 p-3 bg-[#fdfcf9] rounded-xl border border-[#5c554a]/15">
+            <p class="text-[11px] font-bold text-[#4a463f] leading-relaxed">✨ {{ dayHighlights[day] }}</p>
+        </div>
+
+        <!-- 行程項目 -->
+        <div class="p-4 space-y-0">
+            <div v-if="getBookDayItems(day).length === 0"
+                class="text-[10px] text-[#a8a297] font-bold text-center py-4">🍃 今日留白</div>
+            <div v-for="item in getBookDayItems(day)" :key="item.id"
+                class="flex gap-3 py-2.5 border-b border-dashed border-[#5c554a]/12 last:border-0">
+                <span class="text-[10px] text-[#a8a297] font-bold whitespace-nowrap mt-0.5 w-8 shrink-0">
+                    {{ (item.time||'').slice(0,5) }}
+                </span>
+                <span class="mt-0.5 shrink-0 text-sm">{{ bookTypeIcon(item.type) }}</span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-bold text-[#2a2620] leading-snug">{{ item.title }}</p>
+                    <p v-if="item.city || item.transport" class="text-[10px] text-[#8c8577] font-bold mt-0.5">
+                        <span v-if="item.city">📍 {{ item.city }}</span>
+                        <span v-if="item.city && item.transport"> · </span>
+                        <span v-if="item.transport">{{ item.transport }}</span>
+                    </p>
+                    <p v-if="item.note" class="text-[10px] text-[#736c60] mt-1 leading-relaxed whitespace-pre-wrap">{{ item.note }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 頁碼標示 -->
+        <div class="flex justify-between items-center px-4 py-2 bg-[#f8f6f1] border-t border-[#5c554a]/10">
+            <span class="text-[9px] text-[#c4beaf] font-bold">{{ tripInfo.title || '旅遊手記' }}</span>
+            <span class="text-[9px] text-[#c4beaf] font-bold">第 {{ day }} 天</span>
+        </div>
+    </div>
+
+</div>
+
 <!-- Trip Info Modal -->
 
 <div v-if="tripInfoModal" class="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center z-[1001]" @click.self="tripInfoModal = false">
@@ -2436,6 +2561,26 @@ body {
             <input type="text" v-model="tripInfoForm.flightReturn" placeholder="例：BR 112 FUK→TPE 12:30"
                 class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
         </div>
+
+<!-- 各城市旅遊天數 -->
+<div v-if="citySummary.length">
+    <label class="text-[10px] text-[#a8a297] block mb-2 tracking-wider uppercase font-bold">🗺 各城市旅遊天數（自動統計）</label>
+    <div class="space-y-2">
+        <div v-for="c in citySummary" :key="c.city"
+            class="flex items-center gap-2 px-3 py-2 rounded-xl border"
+            :class="getCityColorClass(c.city)">
+            <span class="text-xs font-bold flex-1">🏙 {{ c.city }}</span>
+            <span class="text-[13px] font-black">{{ c.count }}天</span>
+            <div class="flex gap-1 flex-wrap justify-end" style="max-width:130px">
+                <span v-for="d in c.days" :key="d"
+                    class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-white/60 border border-current/30">
+                    D{{d}}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
         <button @click="saveTripInfo"
             class="w-full py-3 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da] transition-all">
             儲存資訊設定
@@ -2509,6 +2654,11 @@ body {
         <i data-lucide="book-open" class="w-4 h-4 lg:w-5 lg:h-5"></i>
         <span class="text-[8px] lg:text-[11px] truncate w-full">備忘資源</span>
     </button>
+<button @click="switchTab('itinerarybook')" :class="textClass('itinerarybook')" class="flex flex-col items-center space-y-0.5 flex-1 min-w-0">
+    <i data-lucide="book-marked" class="w-4 h-4 lg:w-5 lg:h-5"></i>
+    <span class="text-[8px] lg:text-[11px] truncate w-full">行程書</span>
+</button>
+
     <button @click="switchTab('settings')" :class="textClass('settings')" class="flex flex-col items-center space-y-0.5 flex-1 min-w-0">
         <i data-lucide="settings" class="w-4 h-4 lg:w-5 lg:h-5"></i>
         <span class="text-[8px] lg:text-[11px] truncate w-full">基礎格局</span>
@@ -3079,24 +3229,54 @@ const resetTripClCat = () => {
 
 // ── PDF 上傳（機票 / 住宿）──
 const bookingPdfUploading = ref(false);
-const onBookingPdfSelected = async (e) => {
+
+const onBookingPdfSelected = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // 超過 700KB 給提示（Firestore 文件上限約 1MB，base64 約增大 35%）
+    if (file.size > 700 * 1024) {
+        showToast(`⚠️ PDF 過大（${(file.size/1024).toFixed(0)} KB），請壓縮後再選，或改貼雲端連結`);
+        e.target.value = '';
+        return;
+    }
+
     bookingPdfUploading.value = true;
-    try {
-        const path = `trips/${APP_ID}/pdfs/${Date.now()}_${file.name}`;
-        const url  = await window._storageUpload(path, file);
-        bookingForm.value.pdfUrl  = url;
-        bookingForm.value.pdfPath = path;
-        showToast('✅ PDF 已上傳成功');
-    } catch {
-        showToast('PDF 上傳失敗，請確認 Firebase Storage 是否已啟用');
-    } finally {
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        bookingForm.value.pdfUrl  = ev.target.result; // base64 DataURL
+        bookingForm.value.pdfName = file.name;
         bookingPdfUploading.value = false;
         e.target.value = '';
-    }
+        showToast('✅ PDF 已讀取完成');
+        nextTick(() => lucide.createIcons());
+    };
+    reader.onerror = () => {
+        showToast('❌ PDF 讀取失敗，請再試一次');
+        bookingPdfUploading.value = false;
+        e.target.value = '';
+    };
+    reader.readAsDataURL(file);
 };
 
+// 開啟 PDF（base64 DataURL 需轉 Blob，否則瀏覽器會擋）
+const openBookingPdf = (pdfUrl) => {
+    if (!pdfUrl) return;
+    if (pdfUrl.startsWith('http')) { window.open(pdfUrl, '_blank'); return; }
+    try {
+        const [head, b64] = pdfUrl.split(',');
+        const mime = head.match(/:(.*?);/)[1];
+        const bytes = atob(b64);
+        const buf = new Uint8Array(bytes.length);
+        for (let i = 0; i < bytes.length; i++) buf[i] = bytes.charCodeAt(i);
+        const blob = new Blob([buf], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        const win = window.open(blobUrl, '_blank');
+        if (win) setTimeout(() => URL.revokeObjectURL(blobUrl), 20000);
+        else showToast('請允許瀏覽器彈出視窗');
+    } catch { showToast('PDF 開啟失敗'); }
+};
             const itineraryModal = ref({ isOpen: false, isEdit: false, currentId: null });
             const itineraryForm = ref({ day: 1, time: '', type: 'spot', title: '', city: '', transport: '', google: '', nav: '', note: '' });
             const resourceModal = ref({ isOpen: false, isEdit: false, currentId: null });
@@ -3310,7 +3490,7 @@ const generateEntryInfo = async () => {
             const toast = ref({ show: false, message: '' });
 
             const currentTabTitle = computed(() => {
-                const titles = { home: '日常手記', scan: '掃描', records: '記帳', itinerary: '行程漫遊', mapview: '手繪地圖', resources: '備忘資源', settings: '基礎格局' };
+                const titles = { home: '日常手記', scan: '掃描', records: '記帳', itinerary: '行程漫遊', mapview: '手繪地圖', resources: '備忘資源', settings: '基礎格局', itinerarybook: '行程書' };
                 return titles[currentTab.value];
             });
 
@@ -3686,6 +3866,199 @@ const getCityColorClass = (city) => {
     if (!city) return '';
     const hash = [...String(city)].reduce((acc, c) => acc + c.charCodeAt(0), 0);
     return CITY_COLOR_PALETTE[hash % CITY_COLOR_PALETTE.length];
+};
+
+// ── 各城市旅遊天數彙總（Trip Info Modal 用）──
+const citySummary = computed(() => {
+    const map = {};
+    itineraries.value.forEach(item => {
+        if (!item.city || item.day > 26) return;
+        if (!map[item.city]) map[item.city] = new Set();
+        map[item.city].add(item.day);
+    });
+    return Object.entries(map)
+        .map(([city, days]) => ({ city, days: [...days].sort((a,b)=>a-b), count: days.size }))
+        .sort((a,b) => a.days[0] - b.days[0]);
+});
+
+// ── 行程書 ──────────────────────────────────────
+const bookPageSize       = ref('A4');
+const bookIncludeCover   = ref(true);
+const bookIncludeBookings = ref(true);
+
+const bookDays = computed(() => {
+    const days = new Set(itineraries.value.filter(i => i.day <= 26).map(i => i.day));
+    return [...days].sort((a,b) => a-b);
+});
+
+const getBookDayItems = (day) =>
+    [...itineraries.value]
+        .filter(i => i.day === day)
+        .sort((a,b) => {
+            const oa = a.sortOrder ?? 9999, ob = b.sortOrder ?? 9999;
+            if (oa !== ob) return oa - ob;
+            return String(a.time||'').localeCompare(String(b.time||''));
+        });
+
+const bookTypeIcon = (type) => {
+    const m = { '景點':'📍', spot:'📍', '餐廳':'🍽', meal:'🍽',
+                '交通':'🚆', transport:'🚆', hotel:'🏨', pass:'🎫' };
+    return m[type] || '✦';
+};
+
+const printItineraryBook = () => {
+    const title  = tripInfo.value.title  || '旅遊手記';
+    const emoji  = tripInfo.value.emoji  || '✈️';
+    const start  = tripInfo.value.startDate || '';
+    const end    = tripInfo.value.endDate   || '';
+    const isA5   = bookPageSize.value === 'A5';
+
+    const css = `
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Noto Sans TC','Helvetica Neue',Arial,sans-serif;background:#fff;color:#2a2620}
+        @page{size:${bookPageSize.value};margin:0}
+        .pg{width:100%;min-height:100vh;padding:${isA5?'1.4cm 1.6cm':'1.8cm 2cm'};
+            page-break-after:always;break-after:page;position:relative;overflow:hidden}
+        .pg:last-child{page-break-after:auto;break-after:auto}
+        /* Cover */
+        .cover{background:#3a3630;color:#faf8f5;display:flex;flex-direction:column;
+               justify-content:center;align-items:center;text-align:center;gap:14px}
+        .cover-emoji{font-size:${isA5?'52px':'68px'};line-height:1.1}
+        .cover-title{font-size:${isA5?'22px':'30px'};font-weight:900;letter-spacing:.06em}
+        .cover-date{font-size:${isA5?'11px':'13px'};opacity:.7;margin-top:4px}
+        .cover-cities{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:14px}
+        .cover-city{font-size:${isA5?'10px':'12px'};font-weight:bold;padding:4px 14px;
+                    border-radius:20px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35)}
+        .cover-sub{font-size:9px;opacity:.35;letter-spacing:.22em;margin-top:24px}
+        /* Day page */
+        .hd{border-bottom:2px dashed #b0a898;padding-bottom:12px;margin-bottom:14px;
+            display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+        .day-badge{background:#3a3630;color:#faf8f5;border-radius:10px;padding:4px 14px;
+                   font-size:${isA5?'18px':'22px'};font-weight:900;letter-spacing:.05em;white-space:nowrap}
+        .day-date{font-size:${isA5?'11px':'13px'};font-weight:bold;color:#4a463f}
+        .city-tag{display:inline-block;border:1px solid #b0a898;border-radius:6px;
+                  padding:1px 8px;font-size:9px;font-weight:bold;margin:2px 3px 0 0}
+        .hi{background:#fdfcf9;border:1px solid #d8d3ca;border-radius:8px;
+            padding:9px 13px;font-size:${isA5?'10px':'11px'};color:#4a463f;
+            line-height:1.65;margin-bottom:13px;white-space:pre-wrap}
+        .item{display:flex;gap:10px;padding:9px 0;
+              border-bottom:1px dashed #e4dfd6;align-items:flex-start}
+        .item:last-child{border-bottom:none}
+        .item-time{font-size:10px;color:#8c8577;font-weight:bold;white-space:nowrap;
+                   min-width:32px;padding-top:1px}
+        .item-icon{font-size:${isA5?'13px':'15px'};min-width:18px;text-align:center}
+        .item-body{flex:1}
+        .item-title{font-size:${isA5?'12px':'13px'};font-weight:bold;color:#1e1c18;line-height:1.3}
+        .item-sub{font-size:10px;color:#8c8577;margin-top:2px}
+        .item-note{font-size:10px;color:#736c60;margin-top:4px;
+                   line-height:1.55;white-space:pre-wrap}
+        .empty{text-align:center;color:#a8a297;padding:30px 0;font-size:12px}
+        /* Bookings page */
+        .sec-title{font-size:10px;font-weight:bold;color:#a8a297;text-transform:uppercase;
+                   letter-spacing:.1em;border-bottom:1px solid #e8e3da;
+                   padding-bottom:4px;margin:14px 0 9px}
+        .bk-card{padding:9px 12px;background:#fdfcf9;border:1px solid #e0dbd0;
+                 border-radius:8px;margin-bottom:7px}
+        .bk-name{font-weight:bold;font-size:13px;color:#1e1c18;margin-bottom:4px}
+        .bk-row{font-size:10px;color:#736c60;margin-top:2px}
+        /* Footer */
+        .ft{position:absolute;bottom:${isA5?'.9cm':'1.1cm'};left:${isA5?'1.6cm':'2cm'};
+            right:${isA5?'1.6cm':'2cm'};display:flex;justify-content:space-between;
+            font-size:8.5px;color:#b0a898;font-weight:bold;border-top:1px solid #eae5da;
+            padding-top:5px}
+    `;
+
+    let body = '';
+    let pgCount = 0;
+
+    // 封面
+    if (bookIncludeCover.value) {
+        pgCount++;
+        body += `<div class="pg cover">
+            <div class="cover-emoji">${emoji}</div>
+            <div class="cover-title">${title}</div>
+            ${start ? `<div class="cover-date">${start}${end?' ～ '+end:''}</div>` : ''}
+            ${citySummary.value.length ? `<div class="cover-cities">${citySummary.value.map(c=>`<span class="cover-city">${c.city} · ${c.count}天</span>`).join('')}</div>` : ''}
+            <div class="cover-sub">TRAVEL JOURNAL</div>
+        </div>`;
+    }
+
+    // 機票住宿頁
+    if (bookIncludeBookings.value) {
+        const fl = bookings.value.filter(b=>b.type==='flight');
+        const ht = bookings.value.filter(b=>b.type==='hotel');
+        if (fl.length || ht.length) {
+            pgCount++;
+            body += `<div class="pg"><div class="hd"><div class="day-badge">🗂</div><div class="day-date">旅行預定資料</div></div>`;
+            if (fl.length) {
+                body += `<div class="sec-title">✈ 機票訂位</div>`;
+                fl.forEach(b => {
+                    body += `<div class="bk-card"><div class="bk-name">${b.title}</div>
+                        ${b.flightNo?`<div class="bk-row">班次：${b.flightNo}</div>`:''}
+                        ${b.departure?`<div class="bk-row">去程：${b.departure}</div>`:''}
+                        ${b.returnFlight?`<div class="bk-row">回程：${b.returnFlight}</div>`:''}
+                        ${b.orderNo?`<div class="bk-row">訂單：${b.orderNo}</div>`:''}
+                        ${b.note?`<div class="bk-row" style="margin-top:5px;white-space:pre-wrap">${b.note}</div>`:''}</div>`;
+                });
+            }
+            if (ht.length) {
+                body += `<div class="sec-title">🏨 住宿訂位</div>`;
+                ht.forEach(b => {
+                    body += `<div class="bk-card"><div class="bk-name">${b.title}</div>
+                        ${b.checkIn?`<div class="bk-row">入住：${b.checkIn}</div>`:''}
+                        ${b.checkOut?`<div class="bk-row">退房：${b.checkOut}</div>`:''}
+                        ${b.orderNo?`<div class="bk-row">訂單：${b.orderNo}</div>`:''}
+                        ${b.note?`<div class="bk-row" style="margin-top:5px;white-space:pre-wrap">${b.note}</div>`:''}</div>`;
+                });
+            }
+            body += `<div class="ft"><span>${title}</span><span>預定資料</span><span>${pgCount}</span></div></div>`;
+        }
+    }
+
+    // 每日頁
+    bookDays.value.forEach((day) => {
+        pgCount++;
+        const dateLabel = getTargetDateByDay(day);
+        const items     = getBookDayItems(day);
+        const hl        = dayHighlights[day] || '';
+        const cities    = [...new Set(items.map(i=>i.city).filter(Boolean))];
+        body += `<div class="pg">
+            <div class="hd">
+                <div class="day-badge">Day ${day}</div>
+                <div>
+                    <div class="day-date">${dateLabel}</div>
+                    ${cities.length?`<div style="margin-top:4px">${cities.map(c=>`<span class="city-tag">${c}</span>`).join('')}</div>`:''}
+                </div>
+            </div>
+            ${hl?`<div class="hi">✨ ${hl}</div>`:''}
+            <div>
+                ${items.length ? items.map(item=>`
+                <div class="item">
+                    <div class="item-time">${(item.time||'').slice(0,5)}</div>
+                    <div class="item-icon">${bookTypeIcon(item.type)}</div>
+                    <div class="item-body">
+                        <div class="item-title">${item.title}</div>
+                        ${(item.city||item.transport)?`<div class="item-sub">${item.city?'📍 '+item.city:''}${item.city&&item.transport?' · ':''}${item.transport||''}</div>`:''}
+                        ${item.note?`<div class="item-note">${item.note}</div>`:''}
+                    </div>
+                </div>`).join('') : '<div class="empty">🍃 今日留白</div>'}
+            </div>
+            <div class="ft">
+                <span>${title}</span>
+                <span>第 ${day} 天 · ${dateLabel.slice(0,10)}</span>
+                <span>${pgCount}</span>
+            </div>
+        </div>`;
+    });
+
+    const win = window.open('', '_blank',
+        `width=${isA5?800:1100},height=${isA5?1150:1580},menubar=no,toolbar=no`);
+    if (!win) { showToast('請允許彈出視窗，以開啟列印預覽'); return; }
+    win.document.write(`<!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8">
+        <title>${title} – 行程書</title><style>${css}</style></head><body>${body}</body></html>`);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 900);
 };
 
  // ★ 時間僅顯示「時:分」，不顯示秒
@@ -4859,7 +5232,9 @@ copyWeatherPrompt, applyWeatherPaste,
 copyTransitPrompt, parseTransitPaste,
 openNearbySearch, passSectionCollapsed,STANDARD_TRAVEL_CHECKLIST, TRIP_CL_CATS,
 tripClChecked, tripClCat, filteredTripCl, tripClProgress, toggleTripClItem, resetTripClCat,
-bookingPdfUploading, onBookingPdfSelected,hotelItineraries, passItineraries, getShortDateByDay
+bookingPdfUploading, onBookingPdfSelected, openBookingPdf,hotelItineraries, passItineraries, getShortDateByDay,citySummary,
+bookPageSize, bookIncludeCover, bookIncludeBookings, bookDays,
+getBookDayItems, bookTypeIcon, printItineraryBook
             };
 
         }
