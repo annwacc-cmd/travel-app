@@ -3299,6 +3299,7 @@ const transportPdfUploading = ref(false);
 
 const saveTransportData = () => {
     localStorage.setItem(`${APP_ID}__transport_data`, JSON.stringify(transportData));
+    saveToStorage();
 };
 const addTransportLink = () => {
     const name = transportLinkForm.value.name.trim();
@@ -4250,7 +4251,7 @@ localStorage.setItem(`${APP_ID}__transport_data`, JSON.stringify(transportData))
                 _st=setTimeout(async()=>{
                     if(!window._uid){ window._saving=false; return; }
                     try{
-                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,day_photos:dayPhotos,trip_info:tripInfo.value,trip_cl:{...tripClChecked},updatedAt:pendingTs});
+                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,day_photos:dayPhotos,trip_info:tripInfo.value,trip_cl:{...tripClChecked},transport_data:{links:[...transportData.links],pdfs:[...transportData.pdfs]},updatedAt:pendingTs});
                     }
                     catch(e){console.warn('Firestore 同步手帳失敗',e);}
                     finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
@@ -5071,6 +5072,11 @@ watch(recordsSubTab, () => nextTick(() => lucide.createIcons()));
     if(d.day_photos){ Object.keys(dayPhotos).forEach(k=>delete dayPhotos[k]); Object.assign(dayPhotos,d.day_photos); }
     if(d.trip_info){ tripInfo.value=d.trip_info; localStorage.setItem(`${APP_ID}__trip_info`,JSON.stringify(d.trip_info)); }
     if(d.trip_cl){ Object.keys(tripClChecked).forEach(k=>delete tripClChecked[k]); Object.assign(tripClChecked,d.trip_cl); localStorage.setItem(`${APP_ID}__trip_cl`,JSON.stringify(d.trip_cl)); }
+if(d.transport_data){
+        if(Array.isArray(d.transport_data.links)) transportData.links = d.transport_data.links;
+        if(Array.isArray(d.transport_data.pdfs))  transportData.pdfs  = d.transport_data.pdfs;
+        localStorage.setItem(`${APP_ID}__transport_data`, JSON.stringify(transportData));
+    }
     }catch(e){
         console.error('雲端資料載入發生錯誤，已略過異常欄位：', e);
         showToast('⚠️ 部分雲端資料格式異常，已略過');
