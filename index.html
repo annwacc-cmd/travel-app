@@ -279,6 +279,42 @@ body {
     border-radius: 20px 8px 15px 8px/8px 15px 8px 20px;
 }
 
+/* ===== 北歐冬日主題 (Nordic Winter) ===== */
+body.theme-nordic {
+    background-color: #f0f4f8 !important;
+    background-image:
+        linear-gradient(rgba(100, 116, 139, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(100, 116, 139, 0.08) 1px, transparent 1px) !important;
+    color: #334155 !important;
+}
+.theme-nordic #app { background-color: #ffffff !important; border-color: #64748b !important; }
+.theme-nordic .sketch-card, .theme-nordic .sketch-input { background-color: #ffffff !important; border-color: #64748b !important; }
+.theme-nordic .sketch-btn { background-color: #ffffff !important; border-color: #64748b !important; box-shadow: 2px 3px 0px #64748b !important; }
+.theme-nordic .sketch-btn:active { box-shadow: 0px 1px 0px #64748b !important; }
+.theme-nordic .sketch-hr { border-top-color: #94a3b8 !important; }
+.theme-nordic .paper-tape { background: rgba(226, 232, 240, 0.8) !important; border-left-color: rgba(100, 116, 139, 0.25) !important; border-right-color: rgba(100, 116, 139, 0.25) !important; color: #64748b !important; }
+.theme-nordic .highlight-yellow { background: linear-gradient(100deg, rgba(186, 230, 253, 0) 1%, rgba(186, 230, 253, 0.8) 5%, rgba(186, 230, 253, 0.7) 95%, rgba(186, 230, 253, 0.2) 99%) !important; color: #0f172a !important; }
+.theme-nordic .highlight-green { background: linear-gradient(100deg, rgba(191, 219, 254, 0) 1%, rgba(191, 219, 254, 0.8) 5%, rgba(191, 219, 254, 0.7) 95%, rgba(191, 219, 254, 0.2) 99%) !important; color: #0f172a !important; }
+.theme-nordic .highlight-orange { background: linear-gradient(100deg, rgba(221, 214, 254, 0) 1%, rgba(221, 214, 254, 0.8) 5%, rgba(221, 214, 254, 0.7) 95%, rgba(221, 214, 254, 0.2) 99%) !important; color: #0f172a !important;}
+
+/* 覆蓋原本寫死的 Tailwind 顏色 */
+.theme-nordic [class*="text-[#4a463f]"] { color: #334155 !important; }
+.theme-nordic [class*="text-[#5c554a]"] { color: #475569 !important; }
+.theme-nordic [class*="text-[#8c8577]"] { color: #64748b !important; }
+.theme-nordic [class*="text-[#736c60]"] { color: #64748b !important; }
+.theme-nordic [class*="text-[#a8a297]"] { color: #94a3b8 !important; }
+.theme-nordic [class*="text-[#c4beaf]"] { color: #cbd5e1 !important; }
+.theme-nordic [class*="text-[#3d3a34]"] { color: #1e293b !important; }
+.theme-nordic [class*="text-[#faf8f5]"], .theme-nordic [class*="text-[#fffdf9]"] { color: #f8fafc !important; }
+
+.theme-nordic [class*="bg-[#eae5da]"] { background-color: #f1f5f9 !important; }
+.theme-nordic [class*="bg-[#f6f3eb]"] { background-color: #f0f4f8 !important; }
+.theme-nordic [class*="bg-[#fffdf9]"], .theme-nordic [class*="bg-[#fdfcf9]"], .theme-nordic [class*="bg-[#fcfaf4]"], .theme-nordic [class*="bg-[#fffefd]"] { background-color: #ffffff !important; }
+.theme-nordic [class*="bg-[#4a463f]"], .theme-nordic [class*="bg-[#3a3630]"], .theme-nordic [class*="bg-[#5c554a]"] { background-color: #475569 !important; }
+
+.theme-nordic [class*="border-[#5c554a]"] { border-color: #64748b !important; }
+.theme-nordic [class*="border-[#8c8577]"] { border-color: #94a3b8 !important; }
+.theme-nordic .leaflet-container { filter: sepia(0.05) hue-rotate(195deg) contrast(0.95) saturate(0.7) !important; border-color: #64748b !important; }
 
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -1221,7 +1257,7 @@ body {
                 <i data-lucide="ticket" class="w-3 h-3"></i>各類票券
             </button>
 <button @click="switchResourceSubTab('transport')" :class="{'highlight-orange text-[#4a463f]': resourceTab === 'transport'}" class="flex-1 py-1.5 rounded-lg text-center transition-all flex items-center justify-center gap-1">
-                <i data-lucide="train-front" class="w-3 h-3"></i>交通網站
+                <i data-lucide="train-front" class="w-3 h-3"></i>網站
             </button>
         </div>
     </div>
@@ -1672,13 +1708,13 @@ body {
     </div>
 </div>
 
-<!-- 交通網站 & 時刻表 PDF -->
+<!-- 網站 & 時刻表 PDF -->
 <div v-if="resourceTab === 'transport'" class="space-y-4">
 
-    <!-- 交通網站連結 -->
+    <!-- 網站連結 -->
     <div class="sketch-card p-4 space-y-3 relative">
         <div class="absolute -top-2 left-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]/70">TRANSPORT LINKS</div>
-        <p class="text-xs font-bold text-[#4a463f] pt-1">🔗 交通網站連結</p>
+        <p class="text-xs font-bold text-[#4a463f] pt-1">🔗 網站連結</p>
         <div class="flex flex-col gap-2">
             <input type="text" v-model="transportLinkForm.name" placeholder="名稱（如：JR東日本、台鐵）"
                 class="sketch-input px-3 py-2 text-xs text-[#4a463f] placeholder-[#c4beaf] focus:outline-none w-full">
@@ -1690,7 +1726,7 @@ body {
         </div>
         <div class="space-y-2">
             <div v-if="!transportData.links.length" class="text-center py-6 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-xl">
-                尚未新增任何交通網站
+                尚未新增任何網站
             </div>
             <div v-for="lk in transportData.links" :key="lk.id"
                 class="flex items-center gap-3 bg-[#fdfcf9] border border-[#5c554a]/20 rounded-xl px-3 py-2.5">
@@ -1838,6 +1874,26 @@ body {
             </button>
         </div>
     </div>
+
+<!-- 佈景主題設定 -->
+<div class="sketch-card p-5 space-y-3">
+    <h3 class="text-xs uppercase tracking-wider text-[#4a463f] font-bold border-b-2 border-dashed border-[#5c554a]/30 pb-2 flex items-center justify-between">
+        <span>🎨 佈景主題設定</span>
+        <span class="text-[10px] text-[#a8a297] font-normal">風格切換</span>
+    </h3>
+    <div class="flex gap-2">
+        <button @click="changeTheme('wabi-sabi')"
+            :class="currentTheme === 'wabi-sabi' ? 'highlight-yellow border-2 border-[#5c554a] font-bold text-[#4a463f]' : 'sketch-btn text-[#736c60]'"
+            class="flex-1 py-3 text-xs rounded-xl transition-all">
+            🍂 侘寂漫遊
+        </button>
+        <button @click="changeTheme('nordic')"
+            :class="currentTheme === 'nordic' ? 'highlight-yellow border-2 border-[#5c554a] font-bold text-[#4a463f]' : 'sketch-btn text-[#736c60]'"
+            class="flex-1 py-3 text-xs rounded-xl transition-all">
+            ❄️ 北歐冬日
+        </button>
+    </div>
+</div>
 
 <!-- 全系統備份與還原 -->
 <div class="sketch-card p-5 space-y-3">
@@ -2789,6 +2845,17 @@ const TRIP_CL_CATS = [
 
     const vueApp = createApp({
         setup() {
+// ── 佈景主題控制 ──
+            const currentTheme = ref(localStorage.getItem('app_theme') || 'wabi-sabi');
+            const changeTheme = (theme) => {
+                currentTheme.value = theme;
+                localStorage.setItem('app_theme', theme);
+                if (theme === 'nordic') {
+                    document.body.classList.add('theme-nordic');
+                } else {
+                    document.body.classList.remove('theme-nordic');
+                }
+            };
             const currentTab = ref('home');
             const selectedDay = ref(1);
             const resourceTab = ref('japanese');
@@ -3290,7 +3357,7 @@ const openBookingPdf = (pdfUrl) => {
         else showToast('請允許瀏覽器彈出視窗');
     } catch { showToast('PDF 開啟失敗'); }
 };
-// ── 交通網站 & 時刻表 PDF ──────────────────────────────
+// ── 網站 & 時刻表 PDF ──────────────────────────────
 const transportData = Vue.reactive(
     JSON.parse(localStorage.getItem(`${APP_ID}__transport_data`)) || { links: [], pdfs: [] }
 );
@@ -5085,6 +5152,7 @@ if(d.transport_data){
 };
 
             onMounted(() => {
+if (currentTheme.value === 'nordic') document.body.classList.add('theme-nordic');
                 lucide.createIcons();
                 fetchExchangeRates();
                 if(weatherCityInput.value)fetchWeatherByCity(1);
@@ -5252,6 +5320,7 @@ const openNearbySearch = (type) => {
 };
 
             return {
+currentTheme, changeTheme,
                 appId, appIdCollapsed,
                currentTab, selectedDay, resourceTab, recordsViewMode, recordsSubTab,
                 weatherData, weatherCity, weatherCityInput, weatherLoading, weatherError,
