@@ -532,8 +532,8 @@ body.theme-nordic {
         <div class="grid grid-cols-3 gap-2 text-center divide-x-2 divide-dashed divide-[#5c554a]/30">
             <div v-for="(day, i) in weatherData" :key="'a'+i" class="space-y-1">
                 <p class="text-[10px] text-[#8c8577] font-bold">{{ day.dayLabel }}</p>
-                <div class="flex justify-center my-0.5 text-[#5c554a]">
-                    <i :data-lucide="getWeatherIcon(day.condition)" class="w-4 h-4"></i>
+                <div class="flex justify-center my-1 text-2xl drop-shadow-sm leading-none">
+                    {{ day.condition }}
                 </div>
                 <p class="text-xs font-bold text-[#4a463f]">{{ day.tempRange }}</p>
                 <p class="text-[9px] text-[#a8a297] font-bold">☂ {{ day.pop }}</p>
@@ -567,8 +567,8 @@ body.theme-nordic {
         <div class="grid grid-cols-3 gap-2 text-center divide-x-2 divide-dashed divide-[#5c554a]/30">
             <div v-for="(day, i) in weatherData2" :key="'b'+i" class="space-y-1">
                 <p class="text-[10px] text-[#8c8577] font-bold">{{ day.dayLabel }}</p>
-                <div class="flex justify-center my-0.5 text-[#5c554a]">
-                    <i :data-lucide="getWeatherIcon(day.condition)" class="w-4 h-4"></i>
+                <div class="flex justify-center my-1 text-2xl drop-shadow-sm leading-none">
+                    {{ day.condition }}
                 </div>
                 <p class="text-xs font-bold text-[#4a463f]">{{ day.tempRange }}</p>
                 <p class="text-[9px] text-[#a8a297] font-bold">☂ {{ day.pop }}</p>
@@ -3084,19 +3084,20 @@ const daysUntilDeparture = computed(() => {
     return `🌏 旅程進行中，已出發 ${Math.abs(diff)} 天`;
 });
 
-            // WMO weather code
-            const wmoToCondition = (code) => {
-                if (code === 0) return { label: '晴', icon: 'sun' };
-                if (code <= 2) return { label: '多雲', icon: 'cloud-sun' };
-                if (code <= 3) return { label: '陰', icon: 'cloud' };
-                if (code <= 48) return { label: '霧', icon: 'cloud' };
-                if (code <= 57) return { label: '毛毛雨', icon: 'cloud-drizzle' };
-                if (code <= 67) return { label: '雨', icon: 'cloud-rain' };
-                if (code <= 77) return { label: '雪', icon: 'cloud-snow' };
-                if (code <= 82) return { label: '陣雨', icon: 'cloud-rain' };
-                if (code <= 99) return { label: '雷雨', icon: 'cloud-lightning' };
-                return { label: '未知', icon: 'cloud' };
-            };
+            // WMO weather code（對齊帳的圖示對照表，移除變體選擇符確保跨平台一致）
+const WMO_ICON = {
+    0:'☀️', 1:'🌤', 2:'⛅', 3:'☁️',
+    45:'🌫', 48:'🌫',
+    51:'🌦', 53:'🌦', 55:'🌧',
+    61:'🌧', 63:'🌧', 65:'🌧',
+    71:'🌨', 73:'🌨', 75:'❄️', 77:'❄️',
+    80:'🌦', 81:'🌧', 82:'⛈',
+    85:'🌨', 86:'❄️',
+    95:'⛈', 96:'⛈', 99:'⛈'
+};
+const wmoToCondition = (code) => ({
+    icon: WMO_ICON[code] || WMO_ICON[Math.floor(code / 10) * 10] || '🌡️'
+});
 
             const fetchWeatherByLatLon = async (lat, lon) => {
                 const wxRes = await fetch(
