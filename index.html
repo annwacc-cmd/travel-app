@@ -1085,7 +1085,7 @@ body.theme-nordic {
 <!-- 天數選擇滑動條 -->
 
 <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2 border-b-2 border-dashed border-[#5c554a]/30">
-    <button v-for="day in 26" :key="day" 
+    <button v-for="day in mainDayCount" :key="day" 
             @click="selectedDay = day"
             :class="selectedDay === day ? 'highlight-yellow border-2 border-[#5c554a] font-bold' : 'sketch-btn text-[#736c60]'"
             class="px-4 py-2 text-xs rounded-xl whitespace-nowrap transition-all shadow-sm">
@@ -1266,7 +1266,7 @@ body.theme-nordic {
 
         <!-- 目標天數選擇 -->
         <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-            <button v-for="day in 26" :key="day"
+            <button v-for="day in mainDayCount" :key="day"
                 v-if="day !== moveDayModal.fromDay"
                 @click="moveDayModal.toDay = day"
                 :class="moveDayModal.toDay === day
@@ -1873,15 +1873,15 @@ body.theme-nordic {
             </template>
             <!-- 展開 -->
             <div class="ml-auto flex items-center gap-1.5" @click="toggleBackupExpand(idx)">
-                <span class="text-[10px] text-[#a8a297] font-bold">{{ backupItinerariesByDay(27 + idx).length }} 個節點</span>
+                <span class="text-[10px] text-[#a8a297] font-bold">{{ backupItinerariesByDay(mainDayCount + 1 + idx).length }} 個節點</span>
                 <span v-if="!isBackupExpanded(idx)" class="text-[10px] text-[#5c554a] font-bold underline">展開 ›</span>
                 <i v-if="isBackupExpanded(idx)" data-lucide="chevron-up" class="w-3.5 h-3.5 text-[#a8a297]"></i>
             </div>
         </div>
 
 
-    <div v-if="isBackupExpanded(idx) && backupItinerariesByDay(27 + idx).length" class="space-y-2">
-        <div v-for="item in backupItinerariesByDay(27 + idx)" :key="item.id"
+    <div v-if="isBackupExpanded(idx) && backupItinerariesByDay(mainDayCount + 1 + idx).length" class="space-y-2">
+        <div v-for="item in backupItinerariesByDay(mainDayCount + 1 + idx)" :key="item.id"
             class="sketch-card p-3.5 space-y-2">
             <div class="flex items-center gap-2">
                 <span class="text-xs font-mono bg-[#fcfaf4] border border-[#5c554a]/30 text-[#5c554a] px-2 py-0.5 rounded-md font-bold">{{ formatTimeShort(item.time) }}</span>
@@ -1919,7 +1919,7 @@ body.theme-nordic {
 
         </div>
     </div>
-    <div v-if="isBackupExpanded(idx) && !backupItinerariesByDay(27 + idx).length" class="text-center py-4 text-[10px] text-[#a8a297] italic font-bold">
+    <div v-if="isBackupExpanded(idx) && !backupItinerariesByDay(mainDayCount + 1 + idx).length" class="text-center py-4 text-[10px] text-[#a8a297] italic font-bold">
         🍂 此備案手帳內目前沒有任何想法。
     </div>
 </div>
@@ -1968,7 +1968,19 @@ body.theme-nordic {
         </button>
     </div>
 </div>
-
+<div class="sketch-card p-5 space-y-3">
+    <h3 class="text-xs uppercase tracking-wider text-[#4a463f] font-bold border-b-2 border-dashed border-[#5c554a]/30 pb-2 flex items-center justify-between">
+        <span>🗓️ 主行程總天數</span>
+        <span class="text-[10px] text-[#a8a297] font-normal">超過26天請在此調整</span>
+    </h3>
+    <div class="flex items-center gap-3">
+        <input type="number" :value="mainDayCount" @change="setMainDayCount($event.target.value)"
+            min="1" max="90" class="w-24 sketch-input p-2 text-sm text-center focus:outline-none">
+        <p class="text-[11px] text-[#a8a297] font-bold leading-relaxed flex-1">
+            目前主行程為 Day 1～{{ mainDayCount }}，備案將自動接續為 Day {{ mainDayCount + 1 }}～{{ mainDayCount + 5 }}。
+        </p>
+    </div>
+</div>
 <!-- 全系統備份與還原 -->
 <div class="sketch-card p-5 space-y-3">
     <h3 class="text-xs uppercase tracking-wider text-[#4a463f] font-bold border-b-2 border-dashed border-[#5c554a]/30 pb-2 flex items-center justify-between">
@@ -2173,8 +2185,8 @@ body.theme-nordic {
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div>
-                <label class="text-[10px] text-[#a8a297] font-bold block mb-1">對應天數 (備案填27-31)</label>
-                <input type="number" v-model.number="itineraryForm.day" min="1" max="31" class="w-full sketch-input p-2 text-sm focus:outline-none">
+                <label class="text-[10px] text-[#a8a297] font-bold block mb-1">對應天數 (備案填{{ mainDayCount + 1 }}-{{ mainDayCount + 5 }})</label>
+                <input type="number" v-model.number="itineraryForm.day" min="1" :max="mainDayCount + 5" class="w-full sketch-input p-2 text-sm focus:outline-none">
             </div>
             <div>
                 <label class="text-[10px] text-[#a8a297] font-bold block mb-1">時間 (時:分:秒)</label>
@@ -2741,7 +2753,7 @@ body.theme-nordic {
         <div>
             <label class="text-[10px] text-[#a8a297] block mb-2 tracking-wider uppercase font-bold">選擇要放入哪一天</label>
             <div class="flex flex-wrap gap-2 max-h-40 overflow-y-auto no-scrollbar p-1">
-                <button v-for="day in 26" :key="day"
+                <button v-for="day in mainDayCount" :key="day"
                     @click="addToSchedulePicker.targetDay = day"
                     :class="addToSchedulePicker.targetDay === day ? 'highlight-yellow border border-[#5c554a] font-bold' : 'sketch-btn text-[#736c60]'"
                     class="px-3 py-1.5 text-xs rounded-lg transition-all">
@@ -2937,6 +2949,16 @@ const TRIP_CL_CATS = [
 const recordsSubTab = ref('list');
             const newCategoryName = ref('');
             const newPayMethodName = ref('');
+// ★ 主行程總天數（可自訂，預設 26；超過此天數即視為備案，往後自動遞補5頁）
+const mainDayCount = ref(
+    Number(localStorage.getItem(`${APP_ID}__main_day_count`)) || 26
+);
+const setMainDayCount = (n) => {
+    const v = Math.min(90, Math.max(1, Math.round(Number(n)) || 26));
+    mainDayCount.value = v;
+    localStorage.setItem(`${APP_ID}__main_day_count`, String(v));
+    showToast(`主行程已設定為 ${v} 天`);
+};
 
             // ★ 備案天標籤（day 27~31），預設為空白備案，可編輯並持久化
             const backupDayLabels = ref(
@@ -3196,7 +3218,7 @@ const wmoToCondition = (code) => ({
 
             const fetchWeather = () => fetchWeatherByGPS(1);
 const getISODateByDay = (day) => {
-    if (day > 26) return null;
+    if (day > mainDayCount.value) return null;
     const baseDate = new Date(tripInfo.value.startDate || '2027-03-15');
     baseDate.setDate(baseDate.getDate() + (day - 1));
     const y = baseDate.getFullYear(), m = String(baseDate.getMonth() + 1).padStart(2, '0'), d = String(baseDate.getDate()).padStart(2, '0');
@@ -3927,7 +3949,7 @@ const confirmMoveDay = () => {
 
             const addToSchedulePicker = ref({ isOpen: false, item: null, targetDay: 1 });
             const openAddToSchedule = (item) => {
-                addToSchedulePicker.value = { isOpen: true, item, targetDay: selectedDay.value <= 26 ? selectedDay.value : 1 };
+                addToSchedulePicker.value = { isOpen: true, item, targetDay: selectedDay.value <= mainDayCount.value ? selectedDay.value : 1 };
                 nextTick(() => lucide.createIcons());
             };
             const confirmAddToSchedule = () => {
@@ -4043,9 +4065,9 @@ const confirmMoveDay = () => {
 
             // 手帳預設漫遊日期 
             const getTargetDateByDay = (day) => {
-                if (day > 26) {
-                    return backupDayLabels.value[day - 27] || '創意備案';
-                }
+                if (day > mainDayCount.value) {
+          return backupDayLabels.value[day - mainDayCount.value - 1] || '創意備案';
+      }
                 const baseDate = new Date(tripInfo.value.startDate || '2027-03-15');
                 baseDate.setDate(baseDate.getDate() + (day - 1));
                 const year = baseDate.getFullYear();
@@ -4098,7 +4120,7 @@ const getCityColorClass = (city) => {
 const citySummary = computed(() => {
     const map = {};
     itineraries.value.forEach(item => {
-        if (!item.city || item.day > 26) return;
+        if (!item.city || item.day > mainDayCount.value) return;
         if (!map[item.city]) map[item.city] = new Set();
         map[item.city].add(item.day);
     });
@@ -4139,7 +4161,7 @@ const bookIncludeCover   = ref(true);
 const bookIncludeBookings = ref(true);
 
 const bookDays = computed(() => {
-    const days = new Set(itineraries.value.filter(i => i.day <= 26).map(i => i.day));
+    const days = new Set(itineraries.value.filter(i => i.day <= mainDayCount.value).map(i => i.day));
     return [...days].sort((a,b) => a-b);
 });
 
@@ -4591,33 +4613,37 @@ watch(mapPins, (v) => {
             };
 
 const openDayRouteInGoogleMaps = () => {
-                // 定義要排除的類型字串列表（不區分大小寫、去空白）
-                const excludeTypes = ['pass', 'transport', '交通'];
-                
-                const places = filteredItineraries.value
-                    .filter(item => {
-                        const type = (item.type || '').trim().toLowerCase();
-                        // 檢查 item.type 是否包含在排除列表中
-                        return !excludeTypes.some(ex => type === ex.toLowerCase());
-                    })
-                    .map(item => {
-                        const loc = extractLocationData(item);
-                        // 優先使用精確的經緯度，其次使用地名/標題
-                        if (loc.lat && loc.lng) return `${loc.lat},${loc.lng}`;
-                        return item.title;
-                    })
-                    .filter(Boolean);
+    // 定義要排除的類型字串列表（不區分大小寫、去空白）
+    const excludeTypes = ['pass', 'transport', '交通'];
+    
+    const places = filteredItineraries.value
+        .filter(item => {
+            const type = (item.type || '').trim().toLowerCase();
+            // 1. 檢查 item.type 是否包含在排除列表中
+            const isNotExcluded = !excludeTypes.some(ex => type === ex.toLowerCase());
+            // 2. 檢查 item.google (定位連結) 是否有填寫，若空白則跳過
+            const hasGoogleLink = !!(item.google && item.google.trim() !== '');
+            
+            return isNotExcluded && hasGoogleLink;
+        })
+        .map(item => {
+            const loc = extractLocationData(item);
+            // 優先使用解析出的精確經緯度，其次使用地名/標題
+            if (loc.lat && loc.lng) return `${loc.lat},${loc.lng}`;
+            return item.title;
+        })
+        .filter(Boolean);
 
-                if (places.length === 0) {
-                    showToast('今日無景點或餐廳可規劃路線');
-                    return;
-                }
-                
-                // 串接起所有景點
-                const waypoints = places.map(p => encodeURIComponent(p)).join('/');
-                const url = `https://www.google.com/maps/dir/${waypoints}`;
-                window.open(url, '_blank');
-            };
+    if (places.length === 0) {
+        showToast('今日無景點或尚未填寫Google定位連結，無法規劃路線');
+        return;
+    }
+    
+    // 串接起所有景點
+    const waypoints = places.map(p => encodeURIComponent(p)).join('/');
+    const url = `https://www.google.com/maps/dir/${waypoints}`;
+    window.open(url, '_blank');
+};
 
             const geocodeItems = async (items) => {
                 mapGeocoding.value = true;
@@ -5014,15 +5040,20 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
                 return `${h}:${m}:00`;
             };
 
-            const backupDayMap = { '備案手帳一': 27, '備案手帳二': 28, '備案手帳三': 29, '備案手帳四': 30, '備案手帳五': 31 };
+            const backupDayMap = computed(() => {
+          const base = mainDayCount.value;
+          const map = {};
+          backupDayLabels.value.forEach((label, idx) => { map[label] = base + 1 + idx; });
+          return map;
+      });
             const dateStrToDay = (d) => {
     if (!d) return null;
     const s = String(d).trim();
-    if (backupDayMap[s] !== undefined) return backupDayMap[s];
+    if (backupDayMap.value[s] !== undefined) return backupDayMap.value[s];
     // ✅ 直接數字天數 (Excel 填 1, 2, 3...)
     if (/^\d{1,2}$/.test(s)) {
         const n = parseInt(s);
-        if (n >= 1 && n <= 31) return n;
+        if (n >= 1 && n <= mainDayCount.value + 5) return n;
     }
     const m = s.match(/(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
     if (!m) return null;
@@ -5096,7 +5127,7 @@ city: iCity >= 0 ? safe(r[iCity]) : '',
 
                     if (!rows.length) { showToast('未解析出有效手帳節點'); return; }
 
-                    const days = [...new Set(rows.map(r => r.day).filter(d => d <= 26))].sort((a,b)=>a-b);
+                    const days = [...new Set(rows.map(r => r.day).filter(d => d <= mainDayCount.value))].sort((a,b)=>a-b);
                     const dayRange = days.length ? `第 ${days[0]} 天 ～ 第 ${days[days.length-1]} 天` : '創意備案頁面';
 
                     // ── 解析「每日重點」Sheet ──
@@ -5261,7 +5292,7 @@ const todayDayNumber = computed(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const start = new Date(tripInfo.value.startDate); start.setHours(0, 0, 0, 0);
     const diff = Math.round((today - start) / 86400000) + 1;
-    return diff >= 1 && diff <= 26 ? diff : null;
+    return diff >= 1 && diff <= mainDayCount.value ? diff : null;
 });
 
 // ─── 今日行程列表（按時間排序）──────────────────────────
@@ -5433,7 +5464,7 @@ bookingPdfUploading, onBookingPdfSelected, openBookingPdf,hotelItineraries, pass
 addTransportLink, deleteTransportLink,
 onTransportPdfSelected, deleteTransportPdf, openTransportPdf,
 bookPageSize, bookIncludeCover, bookIncludeBookings, bookDays,
-getBookDayItems, bookTypeIcon, printItineraryBook
+getBookDayItems, bookTypeIcon, printItineraryBook, mainDayCount, setMainDayCount
             };
 
         }
