@@ -270,6 +270,7 @@ body {
     .desktop-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
     .desktop-three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
     #leaflet-map { height: 480px !important; }
+#city-route-map { height: 400px !important; }
 }
 
 /* 復古手繪風地圖 */
@@ -2075,79 +2076,124 @@ body.theme-nordic {
 <!-- 地圖 TAB -->
 
 <div v-if="currentTab === 'mapview'" class="space-y-3">
-    <div v-if="mapPinnedItems.length === 0" class="flex flex-col items-center justify-center py-20 text-center space-y-3 sketch-card">
-        <div class="w-16 h-16 rounded-full sketch-btn flex items-center justify-center text-[#a8a297]">
-            <i data-lucide="map-pin-off" class="w-8 h-8"></i>
-        </div>
-        <p class="text-sm font-bold text-[#8c8577]">手寫地圖上空空如也</p>
-        <p class="text-xs text-[#a8a297] font-bold">去正式行程頁面點擊「標記到手繪地圖」<br>想去之景點就會手繪在這裡！</p>
-        <button @click="switchTab('itinerary')" class="mt-2 px-4 py-2 sketch-btn text-xs font-bold">
-            前往行程手記
+
+    <!-- 新增：地圖子頁切換按鈕 -->
+    <div class="flex gap-2 p-1 sketch-input text-xs font-bold mb-1">
+        <button @click="switchMapSubTab('route')"
+            :class="{'highlight-yellow text-[#4a463f]': mapSubTab === 'route'}"
+            class="flex-1 py-1.5 rounded-lg text-center transition-all flex items-center justify-center gap-1">
+            <i data-lucide="map" class="w-3 h-3"></i> 城市路線
+        </button>
+        <button @click="switchMapSubTab('pinned')"
+            :class="{'highlight-yellow text-[#4a463f]': mapSubTab === 'pinned'}"
+            class="flex-1 py-1.5 rounded-lg text-center transition-all flex items-center justify-center gap-1">
+            <i data-lucide="map-pin" class="w-3 h-3"></i> 景點釘選
         </button>
     </div>
 
-<div v-if="mapPinnedItems.length > 0" class="space-y-3">
-    <div class="flex items-center justify-between px-1 font-bold text-xs">
-        <span class="text-[#8c8577]">手繪地圖已釘選 <span class="highlight-yellow">{{ mapPinnedItems.length }}</span> 處景點</span>
-        <div class="flex items-center gap-3">
-            <button @click="refreshLeafletMap" class="text-[10px] text-[#8c8577] hover:text-[#4a463f] flex items-center gap-1">
-                <i data-lucide="refresh-cw" class="w-3 h-3"></i>重新定位
-            </button>
-            <button @click="clearAllMapPins" class="text-[10px] text-red-500 hover:text-red-700 flex items-center gap-1">
-                <i data-lucide="trash-2" class="w-3 h-3"></i>清除全部
-            </button>
-        </div>
-    </div>
+    <!-- 子分頁一：城市路線 -->
+    <div v-if="mapSubTab === 'route'" class="space-y-3">
+        <div v-if="cityRouteStops.length > 0" class="space-y-2">
+            <div class="flex items-center justify-between px-1 font-bold text-xs">
+                <span class="text-[#8c8577]">行程城市路線 共 <span class="highlight-yellow">{{ cityRouteStops.length }}</span> 站</span>
+                <button @click="refreshCityRouteMap" class="text-[10px] text-[#8c8577] hover:text-[#4a463f] flex items-center gap-1">
+                    <i data-lucide="refresh-cw" class="w-3 h-3"></i>重新定位
+                </button>
+            </div>
 
+            <div class="rounded-2xl overflow-hidden shadow-sm relative">
+                <div id="city-route-map" style="height:280px;width:100%;"></div>
+                <div v-if="cityRouteLoading" class="absolute inset-0 bg-[#fffdf9]/90 flex items-center justify-center rounded-2xl z-[1000]">
+                    <span class="text-xs font-bold text-[#8c8577] animate-pulse flex items-center gap-2">
+                        <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>翻閱地理繪卷中...
+                    </span>
+                </div>
+            </div>
 
-<!-- Leaflet 地圖容器 -->
-<div class="rounded-2xl overflow-hidden shadow-sm relative">
-    <div id="leaflet-map" style="height:320px;width:100%;"></div>
-    <div v-if="mapGeocoding" class="absolute inset-0 bg-[#fffdf9]/90 flex items-center justify-center rounded-2xl z-[1000]">
-        <span class="text-xs font-bold text-[#8c8577] animate-pulse flex items-center gap-2">
-            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>翻閱地理繪卷中...
-        </span>
-    </div>
-<!-- 天數顏色圖例 -->
-<div id="map-day-legend" class="flex flex-wrap gap-x-3 gap-y-1 mt-2 px-1 pb-1"></div>
-
-</div>
-
-<!-- 景點手寫明細 -->
-<div class="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-    <div v-for="(item, idx) in mapPinnedItems.filter(Boolean)" :key="item.id"
-        class="sketch-card p-3 flex items-start gap-2">
-        <span class="text-[10px] font-bold text-[#faf8f5] bg-[#5c554a] w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">{{ idx + 1 }}</span>
-        <div class="flex-1 min-w-0">
-            <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
-            <div class="flex items-center gap-2 mt-0.5 flex-wrap font-bold">
-                <span class="text-[10px] text-[#a8a297]">第 {{ item.day }} 天</span>
-                <span v-if="item.type" class="text-[9px] border border-[#5c554a]/30 text-[#8c8577] px-1 rounded uppercase">{{ item.type }}</span>
-                <span class="text-[10px] font-mono text-[#a8a297]">⏱ {{ item.time }}</span>
-                <span v-if="mapCoords[item.id]" class="text-[9px] text-green-600 flex items-center gap-0.5">
-                    ✓ 已定位
+            <div class="flex flex-wrap gap-1.5 px-1">
+                <span v-for="stop in cityRouteStops" :key="stop.order" :class="getCityColorClass(stop.city)"
+                    class="text-[10px] border px-1.5 py-0.5 rounded-md font-bold inline-flex items-center gap-1">
+                    {{ stop.order }}. {{ stop.city }}
+                    <span class="opacity-70">（第{{ stop.days[0] }}{{ stop.days.length > 1 ? '-' + stop.days[stop.days.length - 1] : '' }}天）</span>
+                    <span v-if="cityCoords[stop.city]" class="text-green-600">· 已定位</span>
+                    <span v-else-if="cityGeoFailed[stop.city]" class="text-red-400">· 無法定位</span>
                 </span>
-                <span v-else-if="mapGeoFailed[item.id]" class="text-[9px] text-red-400">無法定位</span>
             </div>
         </div>
-        <div class="flex items-center gap-1.5 shrink-0">
-            <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank"
-                class="text-blue-500 hover:text-blue-700 transition-colors">
-                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-            </a>
-            <button @click="toggleMapPin(item)" class="text-[#c4beaf] hover:text-red-500 transition-colors">
-                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        <div v-else class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/40">
+            🏙️ 目前尚無城市路線資料。
+        </div>
+    </div>
+
+    <!-- 子分頁二：景點釘選 -->
+    <div v-if="mapSubTab === 'pinned'" class="space-y-3">
+        <div v-if="mapPinnedItems.length === 0" class="flex flex-col items-center justify-center py-20 text-center space-y-3 sketch-card">
+            <div class="w-16 h-16 rounded-full sketch-btn flex items-center justify-center text-[#a8a297]">
+                <i data-lucide="map-pin-off" class="w-8 h-8"></i>
+            </div>
+            <p class="text-sm font-bold text-[#8c8577]">手寫地圖上空空如也</p>
+            <p class="text-xs text-[#a8a297] font-bold">去正式行程頁面點擊「標記到手繪地圖」<br>想去之景點就會手繪在這裡！</p>
+            <button @click="switchTab('itinerary')" class="mt-2 px-4 py-2 sketch-btn text-xs font-bold">
+                前往行程手記
             </button>
+        </div>
+
+        <div v-if="mapPinnedItems.length > 0" class="space-y-3">
+            <div class="flex items-center justify-between px-1 font-bold text-xs">
+                <span class="text-[#8c8577]">手繪地圖已釘選 <span class="highlight-yellow">{{ mapPinnedItems.length }}</span> 處景點</span>
+                <div class="flex items-center gap-3">
+                    <button @click="refreshLeafletMap" class="text-[10px] text-[#8c8577] hover:text-[#4a463f] flex items-center gap-1">
+                        <i data-lucide="refresh-cw" class="w-3 h-3"></i>重新定位
+                    </button>
+                    <button @click="clearAllMapPins" class="text-[10px] text-red-500 hover:text-red-700 flex items-center gap-1">
+                        <i data-lucide="trash-2" class="w-3 h-3"></i>清除全部
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leaflet 地圖容器 -->
+            <div class="rounded-2xl overflow-hidden shadow-sm relative">
+                <div id="leaflet-map" style="height:320px;width:100%;"></div>
+                <div v-if="mapGeocoding" class="absolute inset-0 bg-[#fffdf9]/90 flex items-center justify-center rounded-2xl z-[1000]">
+                    <span class="text-xs font-bold text-[#8c8577] animate-pulse flex items-center gap-2">
+                        <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>翻閱地理繪卷中...
+                    </span>
+                </div>
+                <!-- 天數顏色圖例 -->
+                <div id="map-day-legend" class="flex flex-wrap gap-x-3 gap-y-1 mt-2 px-1 pb-1"></div>
+            </div>
+
+            <!-- 景點手寫明細 -->
+            <div class="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+                <div v-for="(item, idx) in mapPinnedItems.filter(Boolean)" :key="item.id"
+ class="sketch-card p-3 flex items-start gap-2">
+                    <span class="text-[10px] font-bold text-[#faf8f5] bg-[#5c554a] w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5">{{ idx + 1 }}</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-[#4a463f] truncate">{{ item.title }}</p>
+                        <div class="flex items-center gap-2 mt-0.5 flex-wrap font-bold">
+                            <span class="text-[10px] text-[#a8a297]">第 {{ item.day }} 天</span>
+                            <span v-if="item.type" class="text-[9px] border border-[#5c554a]/30 text-[#8c8577] px-1 rounded uppercase">{{ item.type }}</span>
+                            <span class="text-[10px] font-mono text-[#a8a297]">⏱ {{ item.time }}</span>
+                            <span v-if="mapCoords[item.id]" class="text-[9px] text-green-600 flex items-center gap-0.5">
+                                ✓ 已定位
+                            </span>
+                            <span v-else-if="mapGeoFailed[item.id]" class="text-[9px] text-red-400">無法定位</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                        <a v-if="item.google && item.google.startsWith('http')" :href="item.google" target="_blank"
+                            class="text-blue-500 hover:text-blue-700 transition-colors">
+                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                        </a>
+                        <button @click="toggleMapPin(item)" class="text-[#c4beaf] hover:text-red-500 transition-colors">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-
-
-</div>
-
-</div>
-
-</main>
 
 <!-- 各種手寫感彈出框 (Modals) -->
 
@@ -2947,6 +2993,8 @@ const TRIP_CL_CATS = [
             const resourceTab = ref('japanese');
             const recordsViewMode = ref('date');
 const recordsSubTab = ref('list');
+const mapSubTab = ref('route');
+const switchMapSubTab = (subTab) => { mapSubTab.value = subTab; nextTick(() => lucide.createIcons()); };
             const newCategoryName = ref('');
             const newPayMethodName = ref('');
 // ★ 主行程總天數（可自訂，預設 26；超過此天數即視為備案，往後自動遞補5頁）
@@ -4759,20 +4807,147 @@ const renderLeafletMap = () => {
                 await geocodeItems(mapPinnedItems.value);
             };
 
-            Vue.watch(() => currentTab.value, async (tab) => {
-                if (tab === 'mapview') {
-                    await nextTick();
-                    lucide.createIcons();
-                    if (!window.L) return;
-                    const uncached = mapPinnedItems.value.filter(i => !mapCoords[i.id] && !mapGeoFailed[i.id]);
-                    if (uncached.length > 0) {
-                        await geocodeItems(mapPinnedItems.value);
-                    } else {
-                        renderLeafletMap();
-                    }
-                }
-            });
+           
+// ── 每日城市路線（依天數排序，顯示行程城市造訪順序）──
+const cityRouteStops = computed(() => {
+    const days = [...new Set(itineraries.value
+        .filter(i => i.city && i.day <= mainDayCount.value)
+        .map(i => i.day))]
+        .sort((a, b) => a - b);
 
+    const stops = [];
+    days.forEach(day => {
+        const items = itineraries.value
+            .filter(i => i.day === day && i.city)
+            .sort((a, b) => {
+                const oa = a.sortOrder ?? 9999;
+                const ob = b.sortOrder ?? 9999;
+                if (oa !== ob) return oa - ob;
+                return String(a.time || '').localeCompare(String(b.time || ''));
+            });
+        const city = items[0].city;
+        const last = stops[stops.length - 1];
+        if (last && last.city === city) {
+            last.days.push(day);
+        } else {
+            stops.push({ city, days: [day] });
+        }
+    });
+    return stops.map((s, idx) => ({ ...s, order: idx + 1 }));
+});
+
+const cityCoords = Vue.reactive({});
+const cityGeoFailed = Vue.reactive({});
+const cityRouteLoading = ref(false);
+let cityRouteMap = null;
+let cityRouteMarkers = [];
+let cityRoutePolyline = null;
+
+const geocodeCityStops = async () => {
+    cityRouteLoading.value = true;
+    for (const stop of cityRouteStops.value) {
+        if (cityCoords[stop.city] || cityGeoFailed[stop.city]) continue;
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(stop.city)}`,
+                { headers: { 'Accept-Language': 'zh-TW,zh', 'User-Agent': 'TravelApp/1.0' } }
+            );
+            const data = await res.json();
+            if (data && data.length > 0) {
+                cityCoords[stop.city] = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+            } else {
+                cityGeoFailed[stop.city] = true;
+            }
+        } catch (e) {
+            cityGeoFailed[stop.city] = true;
+        }
+        await new Promise(r => setTimeout(r, 400));
+    }
+    cityRouteLoading.value = false;
+    await nextTick();
+    renderCityRouteMap();
+};
+const renderCityRouteMap = () => {
+    if (!window.L) return;
+    const el = document.getElementById('city-route-map');
+    if (!el) return;
+
+    if (cityRouteMap) { cityRouteMap.remove(); cityRouteMap = null; }
+    cityRouteMarkers = [];
+    cityRoutePolyline = null;
+    cityRouteMap = L.map('city-route-map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors', maxZoom: 19
+    }).addTo(cityRouteMap);
+
+    const linePoints = [];
+    cityRouteStops.value.forEach(stop => {
+        const c = cityCoords[stop.city];
+        if (!c) return;
+        const color = DAY_COLORS[(stop.order - 1) % DAY_COLORS.length];
+        const dayLabel = stop.days.length > 1
+            ? `第 ${stop.days[0]}-${stop.days[stop.days.length - 1]} 天`
+            : `第 ${stop.days[0]} 天`;
+
+        const icon = L.divIcon({
+            html: `<div style="background:${color};width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;color:#fff">${stop.order}</div>`,
+            iconSize: [22, 22], iconAnchor: [11, 11], className: ''
+        });
+
+        const popup = `<b style="font-size:12px">${stop.order}. ${stop.city}</b><div style="font-size:11px;color:#888;margin-top:2px">${dayLabel}</div>`;
+
+        const marker = L.marker([c.lat, c.lng], { icon }).bindPopup(popup);
+        marker.addTo(cityRouteMap);
+        cityRouteMarkers.push(marker);
+        linePoints.push([c.lat, c.lng]);
+    });
+
+    if (linePoints.length > 1) {
+        cityRoutePolyline = L.polyline(linePoints, {
+            color: '#8c8577', weight: 3, dashArray: '6,6', opacity: 0.85
+        }).addTo(cityRouteMap);
+    }
+
+    if (linePoints.length > 0) {
+        const group = L.featureGroup(cityRouteMarkers);
+        cityRouteMap.fitBounds(group.getBounds().pad(0.25));
+    } else {
+        cityRouteMap.setView([25.0330, 121.5654], 6);
+    }
+};
+
+const refreshCityRouteMap = async () => {
+    cityRouteStops.value.forEach(stop => {
+        delete cityCoords[stop.city];
+        delete cityGeoFailed[stop.city];
+    });
+    await geocodeCityStops();
+};
+
+watch([currentTab, mapSubTab], async ([tab, subTab]) => {
+    if (tab === 'mapview') {
+        await nextTick();
+        lucide.createIcons();
+        if (!window.L) return;
+        
+        // 根據目前的子分頁來決定初始化哪個地圖
+        if (subTab === 'route') {
+            const uncached = cityRouteStops.value.filter(s => !cityCoords[s.city] && !cityGeoFailed[s.city]);
+            if (uncached.length > 0) {
+                await geocodeCityStops();
+            } else {
+                renderCityRouteMap();
+            }
+        } else if (subTab === 'pinned') {
+            const uncached = mapPinnedItems.value.filter(i => !mapCoords[i.id] && !mapGeoFailed[i.id]);
+            if (uncached.length > 0) {
+                await geocodeItems(mapPinnedItems.value);
+            } else {
+                renderLeafletMap();
+            }
+        }
+    }
+});
             const switchTab = (tab) => {
                 currentTab.value = tab;
                 nextTick(() => lucide.createIcons());
@@ -5439,7 +5614,7 @@ currentTheme, changeTheme,
 entryCityInput, entryResult, entryLoading, entryError, generateEntryInfo,toast, newCategoryName, newPayMethodName, currentTabTitle, grandTotalExpenses, todayTotal,
                 groupedExpensesByDate, groupedExpensesByCategory, filteredItineraries, filteredResources, tripInfo, tripInfoModal, tripInfoForm, tripDuration, daysUntilDeparture, openTripInfoModal, saveTripInfo, addCustomCategory, deleteCustomCategory, addCustomPayMethod, deleteCustomPayMethod, getTargetDateByDay, getCategorySpent,
                 getBudgetPercent, totalBudget, totalSpent, formatNumber, textClass, getWeatherIcon, getItineraryTypeStyle, getCityColorClass,
-dayWeatherCache, dayWeatherLoading, dayWeatherError, fetchDayWeather, fetchDayWeatherRange, getISODateByDay, getShortDateLabel,switchTab, openAddExpenseModal, submitExpense, deleteExpense, simulateScan, openAddItineraryModal, exportItineraryExcel,openDayRouteInGoogleMaps,
+dayWeatherCache, dayWeatherLoading, dayWeatherError, fetchDayWeather, fetchDayWeatherRange, getISODateByDay, getShortDateLabel,switchTab,mapSubTab, switchMapSubTab, openAddExpenseModal, submitExpense, deleteExpense, simulateScan, openAddItineraryModal, exportItineraryExcel,openDayRouteInGoogleMaps,
                 openEditItineraryModal, saveItinerary, deleteItinerary, moveItinerary,moveDayModal, openMoveDayModal, confirmMoveDay, openAddResourceModal, openEditResourceModal, saveResource, deleteResource,
                 checklist, checklistModal, checklistForm, toggleChecklistItem, openAddChecklistModal, openEditChecklistModal, saveChecklistItem, deleteChecklistItem, switchResourceSubTab,
                 bookings, bookingModal, bookingForm, bookingImageUploading, openAddBooking, openEditBooking, saveBooking, deleteBooking, onBookingImageSelected, dayPhotos, dayPhotoUploading, onDayPhotoSelected, deleteDayPhoto, backupDayLabels, backupItinerariesByDay, openAddBackupItineraryModal, expandedBackupIdxSet, toggleBackupExpand, isBackupExpanded, editingBackupLabelIdx, editingBackupLabelValue, startEditBackupLabel, saveBackupLabel, addToSchedulePicker, openAddToSchedule, confirmAddToSchedule,
@@ -5448,7 +5623,8 @@ isCameraActive, startCamera, stopCamera, switchCamera, triggerFileInput, capture
 isModalCameraActive, startCameraForExpense, stopCameraForExpense, switchCameraForExpense, triggerExpenseFileInput, capturePhotoForExpense, onExpensePhotoUploaded, closeExpenseModal,
                 excelImportModal, onExcelImport, confirmExcelImport,
                 mapPins, mapPinnedItems, isMapPinned, toggleMapPin, clearAllMapPins, mapCoords, mapGeoFailed, mapGeocoding, refreshLeafletMap,
-                saveToStorage,
+cityRouteStops, cityCoords, cityGeoFailed, cityRouteLoading, refreshCityRouteMap,
+saveToStorage,
                 dayHighlights, getDayHighlight, setDayHighlight,
 expandedExpensePhotos, toggleExpensePhoto,
                 formatTimeShort, budgetsCollapsed, collapsedCategories, isCategoryCollapsed, toggleCategoryCollapse,
