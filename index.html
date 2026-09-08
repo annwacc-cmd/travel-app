@@ -5367,16 +5367,16 @@ const exportItineraryExcel = () => {
     const headers = ['day', 'time', 'type', 'city', 'title', 'transport', 'google', 'nav', 'note'];
     const sorted = [...itineraries.value].sort((a, b) => a.day - b.day || (a.time || '').localeCompare(b.time || ''));
     const rows = sorted.map(item => [
-        item.day,
-        (item.time || '').slice(0, 5),
-        item.type || '',
-        item.city || '',
-        item.title || '',
-        item.transport || '',
-        item.google || '',
-        item.nav || '',
-        item.note || '',
-    ]);
+    item.day,
+    { v: (item.time || '').slice(0, 5), t: 's' },   // ← 加上 { v: ..., t: 's' }
+    item.type || '',
+    item.city || '',
+    item.title || '',
+    item.transport || '',
+    item.google || '',
+    item.nav || '',
+    item.note || '',
+]);
     const wsData = [headers, ...rows];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     ws['!cols'] = [
