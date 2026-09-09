@@ -3348,7 +3348,18 @@ const expensePhotos = Vue.reactive(JSON.parse(localStorage.getItem(`${APP_ID}__e
 
             // ★ 範例清空：行程初始化為空
             const itineraries = ref(_cleanArr(JSON.parse(localStorage.getItem(`${APP_ID}__itineraries_v2`)), EXCEL_ITINERARIES));
-
+// ★ 一次性修正 localStorage 中已損壞的時間（hour > 23 表示受 fracToTime bug 影響）
+// 例："360:00:00" → "15:00:00"，"216:00:00" → "09:00:00"
+itineraries.value = itineraries.value.map(item => {
+    if (!item.time) return item;
+    const mh = item.time.match(/^(\d+):(\d{2}):\d{2}$/);
+    if (mh && parseInt(mh[1], 10) > 23) {
+        const origH = Math.round(parseInt(mh[1], 10) / 24);
+        return { ...item, time: `${String(origH).padStart(2,'0')}:${mh[2]}:00` };
+    }
+    return item;
+});
+localStorage.setItem(`${APP_ID}__itineraries_v2`, JSON.stringify(itineraries.value));
             // ── 每日重點 ──
             const dayHighlights = Vue.reactive(JSON.parse(localStorage.getItem(`${APP_ID}__day_highlights`)) || {});
             const getDayHighlight = (day) => dayHighlights[day] || '';
@@ -5206,14 +5217,25 @@ const compressPhoto = (dataUrl) => new Promise((resolve) => {
             const excelImportModal = ref({ isOpen: false, filename: '', rows: [], dayRange: '', highlights: {}, highlightCount: 0 });
 
             const fracToTime = (t) => {
-                if (t === null || t === undefined || t === '') return '12:00:00';
-                const frac = parseFloat(t);
-                if (isNaN(frac)) return String(t).trim() || '12:00:00';
-                const mins = Math.round(frac * 24 * 60);
-                const h = String(Math.floor(mins / 60)).padStart(2, '0');
-                const m = String(mins % 60).padStart(2, '0');
-                return `${h}:${m}:00`;
-            };
+    if (t === null || t === undefined || t === '') return '12:00:00';
+    // ✅ 先判斷是否已是合法 HH:MM / HH:MM:SS 字串（防止 parseFloat("15:00")=15 的誤判）
+    if (typeof t === 'string') {
+        const s = t.trim();
+        const hm = s.match(/^(\d{1,2}):(\d{2})(:\d{2})?$/);
+        if (hm) {
+            const h = parseInt(hm[1], 10), m = parseInt(hm[2], 10);
+            if (h <= 23 && m <= 59)
+                return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:00`;
+        }
+    }
+    // 處理 Excel 時間分數（0~1，如 0.625 = 15:00）
+    const frac = parseFloat(t);
+    if (isNaN(frac)) return '12:00:00';
+    const mins = Math.round(frac * 24 * 60);
+    const h = String(Math.floor(mins / 60)).padStart(2, '0');
+    const m = String(mins % 60).padStart(2, '0');
+    return `${h}:${m}:00`;
+};
 
             const backupDayMap = computed(() => {
           const base = mainDayCount.value;
