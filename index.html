@@ -490,6 +490,9 @@ body.theme-nordic {
         <button v-if="currentTab === 'resources' && resourceTab === 'checklist'" @click="openAddChecklistModal()" class="w-8 h-8 rounded-full sketch-btn flex items-center justify-center text-[#5c554a] transition-all">
             <i data-lucide="check-square" class="w-4 h-4"></i>
         </button>
+        <button v-if="currentTab === 'shopping'" @click="openAddShoppingModal()" class="w-8 h-8 rounded-full sketch-btn flex items-center justify-center text-[#5c554a] transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
     </div>
 </header>
 
@@ -2600,7 +2603,110 @@ body.theme-nordic {
 </div>
 
 </div>
+<!-- 待購清單 TAB -->
+<div v-if="currentTab === 'shopping'" class="space-y-4">
+    <div class="sketch-card p-4 space-y-2 relative">
+        <div class="absolute -top-2 right-4 px-2 py-0.5 text-[9px] font-bold paper-tape text-[#5c554a]">SHOPPING LIST</div>
+        <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-[#4a463f]">🛒 待購清單</span>
+            <button v-if="shoppingItems.some(i => i.done)" @click="clearDoneShoppingItems()"
+                class="text-[10px] text-red-400 font-bold hover:underline">✕ 清除已購</button>
+        </div>
+        <div class="flex items-center gap-3 text-[11px] text-[#8c8577] font-bold">
+            <span>共 {{ shoppingItems.length }} 項</span>
+            <span class="w-px h-3 bg-[#5c554a]/20"></span>
+            <span>已購 {{ shoppingItems.filter(i => i.done).length }} 項</span>
+            <span class="w-px h-3 bg-[#5c554a]/20"></span>
+            <span>待購 {{ shoppingItems.filter(i => !i.done).length }} 項</span>
+        </div>
+    </div>
 
+    <div v-if="!shoppingItems.length" class="text-center py-12 text-xs text-[#a8a297] font-bold border-2 border-dashed border-[#5c554a]/40 rounded-2xl bg-white/30">
+        🛍 尚無待購項目，點右上角「＋」新增
+    </div>
+
+    <div class="space-y-2">
+        <div v-for="item in shoppingItems" :key="item.id"
+            class="sketch-card p-3 flex items-start gap-3"
+            :class="item.done ? 'opacity-50' : ''">
+            <button @click="toggleShoppingDone(item.id)"
+                class="mt-0.5 w-5 h-5 shrink-0 rounded border-2 border-[#5c554a] flex items-center justify-center transition-all"
+                :class="item.done ? 'bg-[#5c554a]' : 'bg-transparent'">
+                <i v-if="item.done" data-lucide="check" class="w-3 h-3 text-[#fffdf9]"></i>
+            </button>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-[#4a463f] leading-tight" :class="item.done ? 'line-through' : ''">{{ item.name }}</p>
+                <div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+                    <span v-if="item.qty" class="text-[10px] text-[#8c8577] font-bold">× {{ item.qty }}</span>
+                    <span v-if="item.store" class="text-[10px] text-[#8c8577] font-bold">📍 {{ item.store }}</span>
+                </div>
+                <p v-if="item.note" class="text-[10px] text-[#a8a297] mt-0.5 font-bold">{{ item.note }}</p>
+                <img v-if="item.photo" :src="item.photo"
+                    class="mt-2 w-full max-h-36 object-cover rounded-xl border-2 border-[#5c554a]/30" />
+            </div>
+            <div class="flex flex-col gap-1 shrink-0">
+                <button @click="openEditShoppingModal(item)" class="text-[#a8a297] hover:text-[#5c554a] transition-colors">
+                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                </button>
+                <button @click="deleteShoppingItem(item.id)" class="text-[#a8a297] hover:text-red-400 transition-colors">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯 Modal -->
+    <div v-if="shoppingModal.isOpen"
+        class="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-end justify-center z-[1001]"
+        @click.self="shoppingModal.isOpen = false">
+        <div class="bg-[#fffdf9] w-full rounded-t-3xl p-6 space-y-4 border-t-2 border-[#5c554a] shadow-xl relative">
+            <div class="absolute -top-3 left-1/3 right-1/3 h-5 paper-tape text-center text-[10px] font-bold text-[#5c554a]/60">SHOPPING</div>
+            <div class="flex justify-between items-center">
+                <h3 class="text-sm font-bold text-[#4a463f]">{{ shoppingModal.isEdit ? '✎ 編輯項目' : '✎ 新增待購項目' }}</h3>
+                <button @click="shoppingModal.isOpen = false" class="text-[#a8a297] hover:text-[#4a463f]">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">品項名稱 *</label>
+                    <input type="text" v-model="shoppingForm.name" placeholder="例：袋裝零食、伴手禮..." class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">數量</label>
+                        <input type="text" v-model="shoppingForm.qty" placeholder="如：2 個、1 盒" class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">購買地點</label>
+                        <input type="text" v-model="shoppingForm.store" placeholder="如：唐吉訶德" class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">備註</label>
+                    <input type="text" v-model="shoppingForm.note" placeholder="顏色、規格或其他說明..." class="w-full sketch-input p-2 text-sm focus:outline-none placeholder-[#c4beaf]" />
+                </div>
+                <div>
+                    <label class="text-[10px] text-[#a8a297] block mb-1 tracking-wider uppercase font-bold">參考圖片</label>
+                    <div class="space-y-2">
+                        <img v-if="shoppingForm.photo" :src="shoppingForm.photo"
+                            class="w-full max-h-40 object-cover rounded-xl border-2 border-[#5c554a]" />
+                        <label class="flex items-center justify-center gap-2 w-full py-2 bg-[#fcfaf4] border-2 border-dashed border-[#5c554a]/30 rounded-xl text-xs text-[#a8a297] cursor-pointer hover:border-[#5c554a] transition-colors font-bold">
+                            <i data-lucide="image-plus" class="w-4 h-4"></i>
+                            {{ shoppingForm.photo ? '更換圖片' : '上傳參考圖片' }}
+                            <input type="file" accept="image/*" class="hidden" @change="onShoppingImageSelected" />
+                        </label>
+                        <button v-if="shoppingForm.photo" @click="shoppingForm.photo = ''"
+                            class="text-[10px] text-red-500 font-bold hover:underline">✕ 移除圖片</button>
+                    </div>
+                </div>
+            </div>
+            <button @click="saveShoppingItem()" class="w-full py-3 sketch-btn text-sm font-bold text-[#4a463f] hover:bg-[#eae5da] transition-all">
+                {{ shoppingModal.isEdit ? '儲存變更' : '✎ 加入待購清單' }}
+            </button>
+        </div>
+    </div>
+</div>
 <!-- 行程書 TAB ─────────────────────────────── -->
 <div v-if="currentTab === 'itinerarybook'" class="space-y-4 pb-2">
 
@@ -2852,7 +2958,10 @@ body.theme-nordic {
     <i data-lucide="book-marked" class="w-4 h-4 lg:w-5 lg:h-5"></i>
     <span class="text-[8px] lg:text-[11px] truncate w-full">行程書</span>
 </button>
-
+<button @click="switchTab('shopping')" :class="textClass('shopping')" class="flex flex-col items-center space-y-0.5 flex-1 min-w-0">
+    <i data-lucide="shopping-cart" class="w-4 h-4 lg:w-5 lg:h-5"></i>
+    <span class="text-[8px] lg:text-[11px] truncate w-full">待購清單</span>
+</button>
     <button @click="switchTab('settings')" :class="textClass('settings')" class="flex flex-col items-center space-y-0.5 flex-1 min-w-0">
         <i data-lucide="settings" class="w-4 h-4 lg:w-5 lg:h-5"></i>
         <span class="text-[8px] lg:text-[11px] truncate w-full">基礎格局</span>
@@ -3429,6 +3538,57 @@ localStorage.setItem(`${APP_ID}__itineraries_v2`, JSON.stringify(itineraries.val
 
             const checklistModal = ref({ isOpen: false, isEdit: false, currentIndex: null });
             const checklistForm = ref({ title: '', note: '' });
+// ── 待購清單 ──
+const shoppingItems = ref(_cleanArr(JSON.parse(localStorage.getItem(`${APP_ID}__shopping`)), []));
+const shoppingModal = ref({ isOpen: false, isEdit: false, currentId: null });
+const shoppingForm = ref({ name: '', qty: '', store: '', note: '', done: false, photo: '' });
+const openAddShoppingModal = () => {
+    shoppingForm.value = { name: '', qty: '', store: '', note: '', done: false, photo: '' };
+    shoppingModal.value = { isOpen: true, isEdit: false, currentId: null };
+    nextTick(() => lucide.createIcons());
+};
+const openEditShoppingModal = (item) => {
+    shoppingForm.value = { ...item };
+    shoppingModal.value = { isOpen: true, isEdit: true, currentId: item.id };
+    nextTick(() => lucide.createIcons());
+};
+const saveShoppingItem = () => {
+    if (!shoppingForm.value.name.trim()) return;
+    if (shoppingModal.value.isEdit) {
+        const idx = shoppingItems.value.findIndex(i => i.id === shoppingModal.value.currentId);
+        if (idx !== -1) shoppingItems.value[idx] = { ...shoppingItems.value[idx], ...shoppingForm.value };
+    } else {
+        shoppingItems.value.unshift({ id: Date.now(), ...shoppingForm.value });
+    }
+    shoppingModal.value.isOpen = false;
+    saveToStorage();
+    showToast('待購清單已更新');
+};
+const deleteShoppingItem = (id) => {
+    shoppingItems.value = shoppingItems.value.filter(i => i.id !== id);
+    saveToStorage();
+};
+const toggleShoppingDone = (id) => {
+    const item = shoppingItems.value.find(i => i.id === id);
+    if (item) { item.done = !item.done; saveToStorage(); }
+};
+const clearDoneShoppingItems = () => {
+    if (!confirm('確定要清除所有已購買的項目？')) return;
+    shoppingItems.value = shoppingItems.value.filter(i => !i.done);
+    saveToStorage();
+    showToast('已清除完成項目');
+};
+const onShoppingImageSelected = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+        shoppingForm.value.photo = await compressPhoto(ev.target.result);
+        nextTick(() => lucide.createIcons());
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+};
 
 // ── 通用清單狀態 ──
 const tripClChecked = Vue.reactive(
@@ -3797,7 +3957,7 @@ const generateEntryInfo = async () => {
             const toast = ref({ show: false, message: '' });
 
             const currentTabTitle = computed(() => {
-                const titles = { home: '日常手記', scan: '掃描', records: '記帳', itinerary: '行程漫遊', mapview: '手繪地圖', resources: '備忘資源', settings: '基礎格局', itinerarybook: '行程書' };
+                const titles = { home: '日常手記', scan: '掃描', records: '記帳', itinerary: '行程漫遊', mapview: '手繪地圖', resources: '備忘資源', settings: '基礎格局', itinerarybook: '行程書', shopping: '待購清單' };
                 return titles[currentTab.value];
             });
 
@@ -4463,6 +4623,8 @@ const getShortDateByDay = (day) => {
                 localStorage.setItem(K('itineraries_v2'), JSON.stringify(itineraries.value));
                 localStorage.setItem(K('resources'), JSON.stringify(resources.value));
                 localStorage.setItem(K('checklist'), JSON.stringify(checklist.value));
+                         localStorage.setItem(K('shopping'), 
+JSON.stringify(shoppingItems.value));
                 localStorage.setItem(K('day_highlights'), JSON.stringify(dayHighlights));
                 localStorage.setItem(K('day_photos'), JSON.stringify(dayPhotos));
 localStorage.setItem(`${APP_ID}__transport_data`, JSON.stringify(transportData));
@@ -4474,7 +4636,7 @@ localStorage.setItem(`${APP_ID}__transport_data`, JSON.stringify(transportData))
                 _st=setTimeout(async()=>{
                     if(!window._uid){ window._saving=false; return; }
                     try{
-                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,day_photos:dayPhotos,trip_info:tripInfo.value,trip_cl:{...tripClChecked},transport_data:{links:[...transportData.links],pdfs:[...transportData.pdfs]},updatedAt:pendingTs});
+                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,day_photos:dayPhotos,trip_info:tripInfo.value,trip_cl:{...tripClChecked},transport_data:{links:[...transportData.links],pdfs:[...transportData.pdfs]},shopping:shoppingItems.value,updatedAt:pendingTs});
                     }
                     catch(e){console.warn('Firestore 同步手帳失敗',e);}
                     finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
@@ -4538,6 +4700,7 @@ localStorage.setItem(`${APP_ID}__transport_data`, JSON.stringify(transportData))
                         if (d.itineraries_v2) itineraries.value = d.itineraries_v2;
                         if (d.resources) resources.value = d.resources;
                         if (d.checklist) checklist.value = d.checklist;
+                                     if (d.shopping) shoppingItems.value = d.shopping;
                         if (d.day_highlights) { Object.keys(dayHighlights).forEach(k => delete dayHighlights[k]); Object.assign(dayHighlights, d.day_highlights); }
 if (d.day_photos) { Object.keys(dayPhotos).forEach(k => delete dayPhotos[k]); Object.assign(dayPhotos, d.day_photos); }
                         if (d.bookings) bookings.value = d.bookings;
@@ -5662,7 +5825,7 @@ bookingPdfUploading, onBookingPdfSelected, openBookingPdf,hotelItineraries, pass
 addTransportLink, deleteTransportLink,
 onTransportPdfSelected, deleteTransportPdf, openTransportPdf,
 bookPageSize, bookIncludeCover, bookIncludeBookings, bookDays,
-getBookDayItems, bookTypeIcon, printItineraryBook, mainDayCount, setMainDayCount
+getBookDayItems, bookTypeIcon, printItineraryBook, mainDayCount, setMainDayCount,shoppingItems, shoppingModal, shoppingForm, openAddShoppingModal, openEditShoppingModal, saveShoppingItem, deleteShoppingItem, toggleShoppingDone, clearDoneShoppingItems, onShoppingImageSelected
             };
 
         }
