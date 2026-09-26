@@ -4731,7 +4731,7 @@ if (d.day_photos) { Object.keys(dayPhotos).forEach(k => delete dayPhotos[k]); Ob
             // ── 手繪地圖 ──
             const mapPins = ref(_cleanArr(JSON.parse(localStorage.getItem(`${APP_ID}__map_pins`)), [], true));
 // ── 陣列即時防護：不論資料從本機或雲端進來，只要混入壞資料就自動濾除 ──
-[itineraries, resources, checklist, bookings].forEach(refObj => {
+[itineraries, resources, checklist, bookings, shoppingItems].forEach(refObj => {
     watch(refObj, (v) => {
         if (!Array.isArray(v)) return;
         const cleaned = v.filter(x => x && typeof x === 'object');
@@ -5601,6 +5601,7 @@ watch(recordsSubTab, () => nextTick(() => lucide.createIcons()));
     if(Array.isArray(d.checklist))checklist.value=_cleanArr(d.checklist, checklist.value);
     if(Array.isArray(d.bookings))bookings.value=_cleanArr(d.bookings, bookings.value);
     if(Array.isArray(d.map_pins))mapPins.value=_cleanArr(d.map_pins, mapPins.value, true);
+        if(Array.isArray(d.shopping))shoppingItems.value=_cleanArr(d.shopping, shoppingItems.value);
     if(d.day_highlights){ Object.keys(dayHighlights).forEach(k=>delete dayHighlights[k]); Object.assign(dayHighlights,d.day_highlights); }
     if(d.day_photos){ Object.keys(dayPhotos).forEach(k=>delete dayPhotos[k]); Object.assign(dayPhotos,d.day_photos); }
     if(d.trip_info){ tripInfo.value=d.trip_info; localStorage.setItem(`${APP_ID}__trip_info`,JSON.stringify(d.trip_info)); }
