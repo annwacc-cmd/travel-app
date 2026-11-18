@@ -380,6 +380,126 @@ body.theme-nordic {
 /* 5. 自動點綴：讓所有標題紙膠帶加上雪花符號 */
 .theme-nordic .paper-tape::before { content: '❄ '; opacity: 0.7; }
 .theme-nordic .paper-tape::after { content: ' ❄'; opacity: 0.7; }
+/* ===== 旅程日期軸（行程頁上方的每日按鈕）===== */
+.ds-wrap {
+    --ds-ink: #5c554a;        /* 軸線、圓點外框 */
+    --ds-text: #4a463f;       /* 星期文字 */
+    --ds-num: #7a8b6f;        /* 未選取的日期數字 */
+    --ds-sel: #b8d4a0;        /* 選取日：圓點與日期底色 */
+    --ds-sel-text: #33422b;   /* 選取日：日期文字 */
+    --ds-dot-bg: #fffdf9;     /* 未選取圓點的填色 */
+    --ds-w: 36px;             /* 每天最小寬度（天數超過一個畫面時會左右滑動）*/
+    border-bottom: 2px dashed rgba(92, 85, 74, .3);
+}
+.ds-wrap, .ds-wrap *, .ds-wrap *::before { box-sizing: border-box; }
+.theme-nordic .ds-wrap {
+    --ds-ink: #64748b; --ds-text: #334155; --ds-num: #64748b;
+    --ds-sel: #bfdbfe; --ds-sel-text: #0f172a; --ds-dot-bg: #ffffff;
+    border-bottom-color: rgba(100, 116, 139, .3);
+}
+
+.ds-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 42px 6px 8px;           /* 上方空間留給貼紙 */
+    overscroll-behavior-x: contain;
+}
+
+.ds-track {
+    position: relative;
+    display: flex;
+    width: max(100%, calc(var(--n) * var(--ds-w)));   /* 天數少：撐滿；天數多：可滑動 */
+}
+
+/* 貼紙：永遠在「選取日」正上方，換日時滑過去 */
+.ds-sticker {
+    position: absolute;
+    left: calc((var(--i) - .5) / var(--n) * 100%);
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%);
+    transition: left .45s cubic-bezier(.34, 1.3, .64, 1);
+    font-size: 24px;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    -webkit-user-select: none; user-select: none;
+}
+.ds-sticker > span {
+    display: inline-block;
+    animation: ds-pop .4s cubic-bezier(.34, 1.56, .64, 1);
+}
+@keyframes ds-pop {
+    0%   { transform: scale(.5); opacity: 0; }
+    60%  { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+/* 每一天的按鈕 */
+.ds-node {
+    position: relative;
+    flex: 0 0 calc(100% / var(--n));
+    min-width: 0;
+    padding: 0 0 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: none;
+    border: 0;
+    border-radius: 14px;
+    font: inherit;
+    color: var(--ds-text);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: background-color .15s;
+}
+.ds-node:active { background-color: rgba(92, 85, 74, .14); }          /* 按下時的灰底 */
+.ds-node:focus-visible { outline: 2px solid var(--ds-ink); outline-offset: -2px; }
+
+/* 串起每一天的軸線（第一天從圓心開始、最後一天到圓心為止）*/
+.ds-node::before {
+    content: '';
+    position: absolute;
+    top: 7px; left: 0; right: 0;
+    height: 3px; margin-top: -1.5px;
+    background: var(--ds-ink);
+}
+.ds-node:first-of-type::before { left: 50%; border-radius: 2px 0 0 2px; }
+.ds-node:last-of-type::before  { right: 50%; border-radius: 0 2px 2px 0; }
+
+.ds-dot {
+    position: relative; z-index: 1;
+    box-sizing: border-box;
+    width: 14px; height: 14px;
+    border: 3px solid var(--ds-ink);
+    border-radius: 50%;
+    background: var(--ds-dot-bg);
+    transition: background-color .2s, transform .3s cubic-bezier(.34, 1.56, .64, 1);
+}
+.ds-wk  { margin-top: 7px; font-size: 12px; line-height: 1; font-weight: 700; letter-spacing: .5px; }
+.ds-num {
+    margin-top: 5px;
+    min-width: 28px; padding: 3px 6px;
+    font-size: 17px; line-height: 1.1; font-weight: 700; text-align: center;
+    color: var(--ds-num);
+    border-radius: 10px;
+    transition: background-color .2s, color .2s;
+}
+
+/* 選取中的那一天 */
+.ds-node.is-active .ds-dot { background: var(--ds-sel); transform: scale(1.12); }
+.ds-node.is-active .ds-num { background: var(--ds-sel); color: var(--ds-sel-text); animation: ds-pop .35s cubic-bezier(.34, 1.56, .64, 1); }
+/* 今天（只有旅程期間內才會出現）*/
+.ds-node.is-today .ds-wk { color: #c0623a; }
+
+/* 想讓日期軸捲動時固定在畫面上方，可取消下面這段的註解
+.ds-wrap { position: sticky; top: 0; z-index: 10; background: #fffdf9; }
+.theme-nordic .ds-wrap { background: #ffffff; }
+*/
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-sticker, .ds-sticker > span, .ds-dot, .ds-num { transition: none; animation: none; }
+}
 
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -1086,19 +1206,30 @@ body.theme-nordic {
         </button>
     </div>
 
-<!-- 天數選擇滑動條 -->
-
-<div class="flex gap-2 overflow-x-auto no-scrollbar pb-2 border-b-2 border-dashed border-[#5c554a]/30">
-    <button v-for="day in mainDayCount" :key="day" 
-            @click="selectedDay = day"
-            :class="selectedDay === day ? 'highlight-yellow border-2 border-[#5c554a] font-bold' : 'sketch-btn text-[#736c60]'"
-            class="px-4 py-2 text-xs rounded-xl whitespace-nowrap transition-all shadow-sm">
-        第 {{ day }} 天
-    </button>
+<!-- 天數選擇：旅程日期軸 -->
+<div class="ds-wrap">
+    <div class="ds-scroll no-scrollbar" ref="dayStripEl">
+        <div class="ds-track" :style="{ '--n': dayStripItems.length, '--i': selectedDay }">
+            <!-- 貼紙：會滑到選取日的正上方 -->
+            <div v-if="selectedDay >= 1 && selectedDay <= dayStripItems.length" class="ds-sticker" aria-hidden="true">
+                <span :key="selectedDay">{{ getDaySticker(selectedDay) }}</span>
+            </div>
+            <button v-for="it in dayStripItems" :key="it.day" type="button"
+                    class="ds-node"
+                    :class="{ 'is-active': selectedDay === it.day, 'is-today': todayDayNumber === it.day }"
+                    :aria-label="'第 ' + it.day + ' 天'"
+                    :aria-current="selectedDay === it.day ? 'date' : null"
+                    @click="selectedDay = it.day">
+                <span class="ds-dot"></span>
+                <span class="ds-wk">{{ it.wk }}</span>
+                <span class="ds-num">{{ it.d }}</span>
+            </button>
+        </div>
+    </div>
 </div>
 
 <div class="text-xs text-[#a8a297] font-bold flex justify-between items-center px-1">
-    <span>📅 日期對應：{{ getTargetDateByDay(selectedDay) }}</span>
+    <span>🚃🏯🏞️📷🎡🚗 第 {{ selectedDay }} 天・{{ getTargetDateByDay(selectedDay) }}</span>
     <div class="flex items-center gap-2">
         <span>共 {{ filteredItineraries.length }} 處漫遊節點</span>
         <button @click="openMoveDayModal"
@@ -1606,22 +1737,73 @@ body.theme-nordic {
         </button>
     </div>
 
-    <!-- 項目列表 -->
-    <div class="space-y-1 max-h-64 overflow-y-auto no-scrollbar">
+    <!-- 項目列表（可編輯／刪除）-->
+    <div id="tripClList" class="space-y-1 max-h-64 overflow-y-auto no-scrollbar">
         <div v-for="item in filteredTripCl" :key="item.id"
-            class="flex items-center gap-2.5 px-2 py-1.5 rounded-xl cursor-pointer select-none transition-colors"
-            :class="tripClChecked[item.id] ? 'opacity-50' : 'hover:bg-[#f8f6f1]'"
-            @click="toggleTripClItem(item.id)">
-            <span class="w-5 h-5 rounded border border-[#5c554a] flex items-center justify-center shrink-0 transition-colors"
-                :class="tripClChecked[item.id] ? 'bg-[#5c554a] text-white' : 'bg-transparent'">
-                <i v-if="tripClChecked[item.id]" data-lucide="check" class="w-3 h-3"></i>
-            </span>
-            <span class="text-xs font-bold text-[#4a463f] transition-all"
-                :class="{'line-through text-[#a8a297]': tripClChecked[item.id]}">
-                {{ item.label }}
-            </span>
+            class="flex items-center gap-1 px-2 py-0.5 rounded-xl transition-colors"
+            :class="tripClEditId === item.id ? 'bg-[#f8f6f1]' : 'hover:bg-[#f8f6f1]'">
+
+            <!-- 編輯中：輸入框 + 儲存 / 取消 -->
+            <template v-if="tripClEditId === item.id">
+                <input id="tripClEditInput" type="text" v-model="tripClEditText" maxlength="60"
+                    @keydown.enter="saveEditTripCl" @keydown.esc="cancelEditTripCl"
+                    class="flex-1 min-w-0 sketch-input px-2.5 py-1.5 text-xs text-[#4a463f] focus:outline-none">
+                <button @click="saveEditTripCl" aria-label="儲存"
+                    class="p-1.5 shrink-0 text-[#5c7a4a] hover:text-[#3f5a31] transition-colors">
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                </button>
+                <button @click="cancelEditTripCl" aria-label="取消"
+                    class="p-1.5 shrink-0 text-[#a8a297] hover:text-[#5c554a] transition-colors">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </template>
+
+            <!-- 一般顯示：點左邊勾選，右邊鉛筆編輯、垃圾桶刪除 -->
+            <template v-else>
+                <div class="flex items-center gap-2.5 flex-1 min-w-0 py-1.5 cursor-pointer select-none"
+                    :class="{'opacity-50': tripClChecked[item.id]}"
+                    @click="toggleTripClItem(item.id)">
+                    <span class="w-5 h-5 rounded border border-[#5c554a] flex items-center justify-center shrink-0 transition-colors"
+                        :class="tripClChecked[item.id] ? 'bg-[#5c554a] text-white' : 'bg-transparent'">
+                        <i v-if="tripClChecked[item.id]" data-lucide="check" class="w-3 h-3"></i>
+                    </span>
+                    <span class="text-xs font-bold text-[#4a463f] transition-all"
+                        :class="{'line-through text-[#a8a297]': tripClChecked[item.id]}">
+                        {{ item.label }}
+                    </span>
+                </div>
+                <button @click="startEditTripCl(item)" aria-label="編輯"
+                    class="p-1.5 shrink-0 text-[#a8a297] hover:text-[#5c554a] transition-colors">
+                    <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                </button>
+                <button @click="deleteTripClItem(item)" aria-label="刪除"
+                    class="p-1.5 shrink-0 text-[#a8a297] hover:text-red-500 transition-colors">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+            </template>
+        </div>
+
+        <div v-if="filteredTripCl.length === 0"
+            class="text-center py-6 text-[11px] text-[#a8a297] font-bold">
+            這個分類還沒有項目，可在下方新增，或按「還原預設清單」找回預設項目
         </div>
     </div>
+ <!-- 新增項目：加到目前選的分類最後面 -->
+    <div class="flex items-center gap-2">
+        <input id="tripClAddInput" type="text" v-model="tripClAddText" maxlength="60"
+            :placeholder="'新增到「' + tripClCatLabel + '」…'"
+            @keydown.enter="addTripClItem"
+            class="flex-1 min-w-0 sketch-input px-2.5 py-1.5 text-xs text-[#4a463f] placeholder-[#c4beaf] focus:outline-none">
+        <button @click="addTripClItem" :disabled="!tripClAddText.trim()" aria-label="新增項目"
+            class="w-8 h-8 shrink-0 rounded-full sketch-btn flex items-center justify-center text-[#5c554a] transition-all disabled:opacity-40">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
+    </div>
+
+    <button @click="resetTripClItems"
+        class="block mx-auto text-[10px] text-[#a8a297] hover:text-[#5c554a] font-bold transition-colors">
+        ↺ 還原預設清單
+    </button>
 </div>
 
 <!-- 自訂清單 分隔線 -->
@@ -3590,21 +3772,35 @@ const onShoppingImageSelected = async (e) => {
     e.target.value = '';
 };
 
-// ── 通用清單狀態 ──
+// ── 通用清單狀態（可編輯／刪除）──
 const tripClChecked = Vue.reactive(
     JSON.parse(localStorage.getItem(`${APP_ID}__trip_cl`) || '{}')
 );
 const tripClCat = ref('A');
 
+// 清單內容改存在這裡：第一次使用預設清單，之後以你的修改為準
+const tripClItems = ref(_cleanArr(
+    JSON.parse(localStorage.getItem(`${APP_ID}__trip_cl_items`)),
+    STANDARD_TRAVEL_CHECKLIST.map(i => ({ ...i }))
+));
+const tripClEditId = ref(null);
+const tripClEditText = ref('');
+
 const filteredTripCl = computed(() =>
-    STANDARD_TRAVEL_CHECKLIST.filter(i => i.cat === tripClCat.value)
+    tripClItems.value.filter(i => i.cat === tripClCat.value)
 );
 
 const tripClProgress = computed(() => {
-    const total = STANDARD_TRAVEL_CHECKLIST.length;
-    const done  = STANDARD_TRAVEL_CHECKLIST.filter(i => tripClChecked[i.id]).length;
+    const total = tripClItems.value.length;
+    const done  = tripClItems.value.filter(i => tripClChecked[i.id]).length;
     return { done, total, pct: total ? Math.round(done / total * 100) : 0 };
 });
+
+const saveTripClItems = () => {
+    localStorage.setItem(`${APP_ID}__trip_cl_items`, JSON.stringify(tripClItems.value));
+    saveToStorage();
+    nextTick(() => lucide.createIcons());
+};
 
 const toggleTripClItem = (id) => {
     tripClChecked[id] = !tripClChecked[id];
@@ -3616,12 +3812,98 @@ const toggleTripClItem = (id) => {
 const resetTripClCat = () => {
     const catInfo = TRIP_CL_CATS.find(c => c.key === tripClCat.value);
     if (!confirm(`確定重設「${catInfo?.emoji} ${catInfo?.label}」的所有勾選？`)) return;
-    STANDARD_TRAVEL_CHECKLIST.filter(i => i.cat === tripClCat.value)
+    tripClItems.value.filter(i => i.cat === tripClCat.value)
         .forEach(i => { tripClChecked[i.id] = false; });
     localStorage.setItem(`${APP_ID}__trip_cl`, JSON.stringify({...tripClChecked}));
     saveToStorage();
     showToast('此類別清單已重設');
 };
+
+// 編輯：點鉛筆 → 該列變成輸入框
+const startEditTripCl = (item) => {
+    tripClEditId.value = item.id;
+    tripClEditText.value = item.label;
+    nextTick(() => {
+        lucide.createIcons();
+        const el = document.getElementById('tripClEditInput');
+        if (el) { el.focus(); el.select(); }
+    });
+};
+const cancelEditTripCl = () => {
+    tripClEditId.value = null;
+    nextTick(() => lucide.createIcons());
+};
+const saveEditTripCl = (e) => {
+    if (e && (e.isComposing || e.keyCode === 229)) return;   // 注音／拼音選字時按 Enter，不算送出
+    const text = tripClEditText.value.trim();
+    if (!text) { showToast('項目名稱不可空白'); return; }
+    const item = tripClItems.value.find(i => i.id === tripClEditId.value);
+    if (item && item.label !== text) {
+        item.label = text;
+        saveTripClItems();
+        showToast('已更新項目');
+    }
+    cancelEditTripCl();
+};
+
+// 刪除
+const deleteTripClItem = (item) => {
+    if (!confirm(`確定刪除「${item.label}」？`)) return;
+    tripClItems.value = tripClItems.value.filter(i => i.id !== item.id);
+    if (tripClEditId.value === item.id) tripClEditId.value = null;
+    saveTripClItems();
+    showToast('已刪除項目');
+};
+
+// 新增：在目前的分類最後面加一個項目
+const tripClAddText = ref('');
+const tripClCatLabel = computed(() => {
+    const c = TRIP_CL_CATS.find(c => c.key === tripClCat.value);
+    return c ? `${c.emoji} ${c.label}` : '';
+});
+const addTripClItem = (e) => {
+    if (e && (e.isComposing || e.keyCode === 229)) return;   // 注音／拼音選字時按 Enter，不算送出
+    const text = tripClAddText.value.trim();
+    if (!text) return;
+    if (tripClItems.value.some(i => i.cat === tripClCat.value && String(i.label || '').toLowerCase() === text.toLowerCase())) {
+        showToast('這個分類已經有相同的項目了');
+        return;
+    }
+    const used = new Set(tripClItems.value.map(i => i.id));
+    let id;
+    do { id = `my_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`; } while (used.has(id));
+    tripClItems.value.push({ id, cat: tripClCat.value, label: text });
+    tripClAddText.value = '';
+    saveTripClItems();
+    showToast('已新增項目');
+    nextTick(() => {
+        const list = document.getElementById('tripClList');
+        if (list) list.scrollTop = list.scrollHeight;                // 捲到最底，看得到剛新增的項目
+        if (e && e.type === 'keydown') {                             // 用 Enter 新增時，游標留在輸入框，方便連續輸入
+            const input = document.getElementById('tripClAddInput');
+            if (input) input.focus();
+        }
+    });
+};
+
+// 還原預設：改過、刪掉的預設項目會復原；自己新增的項目和勾選狀態會保留
+const resetTripClItems = () => {
+    if (!confirm('把「旅行通用清單」的預設項目還原？\n你改過、刪掉的預設項目會復原；自己新增的項目和勾選狀態會保留。')) return;
+    const defaultIds = new Set(STANDARD_TRAVEL_CHECKLIST.map(i => i.id));
+    tripClItems.value = [
+        ...STANDARD_TRAVEL_CHECKLIST.map(i => ({ ...i })),
+        ...tripClItems.value.filter(i => !defaultIds.has(i.id))
+    ];
+    tripClEditId.value = null;
+    saveTripClItems();
+    showToast('已還原預設清單');
+};
+
+// 切換分類時：結束編輯，並重新繪製圖示
+watch(tripClCat, () => {
+    tripClEditId.value = null;
+    nextTick(() => lucide.createIcons());
+});
 
 // ── PDF 上傳（機票 / 住宿）──
 const bookingPdfUploading = ref(false);
@@ -4636,7 +4918,7 @@ localStorage.setItem(`${APP_ID}__transport_data`, JSON.stringify(transportData))
                 _st=setTimeout(async()=>{
                     if(!window._uid){ window._saving=false; return; }
                     try{
-                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,day_photos:dayPhotos,trip_info:tripInfo.value,trip_cl:{...tripClChecked},transport_data:{links:[...transportData.links],pdfs:[...transportData.pdfs]},shopping:shoppingItems.value,updatedAt:pendingTs});
+                        await window._fsSave(window._uid,APP_ID,{categories:categories.value,paymethods:payMethods.value,budgets:categoryBudgets,expenses:expenses.value,itineraries_v2:itineraries.value,resources:resources.value,checklist:checklist.value,bookings:bookings.value,map_pins:mapPins.value,day_highlights:dayHighlights,day_photos:dayPhotos,trip_info:tripInfo.value,trip_cl:{...tripClChecked},trip_cl_items:tripClItems.value,transport_data:{links:[...transportData.links],pdfs:[...transportData.pdfs]},shopping:shoppingItems.value,updatedAt:pendingTs});
                     }
                     catch(e){console.warn('Firestore 同步手帳失敗',e);}
                     finally{ setTimeout(()=>{ window._saving=false; }, 2000); }
@@ -4657,6 +4939,7 @@ localStorage.setItem(`${APP_ID}__transport_data`, JSON.stringify(transportData))
                         itineraries_v2: itineraries.value,
                         resources: resources.value,
                         checklist: checklist.value,
+                        trip_cl_items: tripClItems.value,
                         day_highlights: dayHighlights,
                         trip_info: tripInfo.value,
                         bookings: bookings.value,
@@ -4700,6 +4983,7 @@ localStorage.setItem(`${APP_ID}__transport_data`, JSON.stringify(transportData))
                         if (d.itineraries_v2) itineraries.value = d.itineraries_v2;
                         if (d.resources) resources.value = d.resources;
                         if (d.checklist) checklist.value = d.checklist;
+                        if (Array.isArray(d.trip_cl_items)) { tripClItems.value = d.trip_cl_items; localStorage.setItem(K('trip_cl_items'), JSON.stringify(d.trip_cl_items)); }
                                      if (d.shopping) shoppingItems.value = d.shopping;
                         if (d.day_highlights) { Object.keys(dayHighlights).forEach(k => delete dayHighlights[k]); Object.assign(dayHighlights, d.day_highlights); }
 if (d.day_photos) { Object.keys(dayPhotos).forEach(k => delete dayPhotos[k]); Object.assign(dayPhotos, d.day_photos); }
@@ -4911,6 +5195,33 @@ const openDayRouteInGoogleMaps = () => {
     '#ffc107','#3f51b5','#ff4081','#76ff03','#00e5ff'
 ];
 
+// ── 地圖底圖（圖磚）──────────────────────────────────────────────
+// OSM 官方圖磚要求每個請求都帶 Referer。用「本機檔案」(file://) 開啟時，瀏覽器不會送 Referer，
+// 圖磚就會被擋成「403 Access blocked」。所以：本機開啟預設用 Esri 街道圖，從網站網址開啟預設用 OSM；
+// 地圖右上角可以手動切換，並會記住你的選擇。
+const addBaseTiles = (map) => {
+    const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        referrerPolicy: 'origin',
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    });
+    const esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles © Esri — Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+    });
+    const key = `${APP_ID}__map_base`;
+    const isLocal = location.protocol === 'file:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    let saved = null;
+    try { saved = localStorage.getItem(key); } catch (e) {}
+    const useOsm = saved === 'osm' || (saved !== 'esri' && !isLocal);
+    (useOsm ? osm : esri).addTo(map);
+    L.control.layers({ 'OpenStreetMap': osm, 'Esri 街道圖': esri }, null, { position: 'topright' }).addTo(map);
+    map.on('baselayerchange', (e) => {
+        try { localStorage.setItem(key, e.layer === osm ? 'osm' : 'esri'); } catch (err) {}
+    });
+};
+
+
 const renderLeafletMap = () => {
     if (!window.L) return;
     const el = document.getElementById('leaflet-map');
@@ -4919,9 +5230,8 @@ const renderLeafletMap = () => {
     if (leafletMap) { leafletMap.remove(); leafletMap = null; }
     leafletMarkers = [];
     leafletMap = L.map('leaflet-map');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors', maxZoom: 19
-    }).addTo(leafletMap);
+    addBaseTiles(leafletMap);
+
 
     const usedDays = new Set();
     const allCoords = [];
@@ -5050,9 +5360,8 @@ const renderCityRouteMap = () => {
     cityRouteMarkers = [];
     cityRoutePolyline = null;
     cityRouteMap = L.map('city-route-map');
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors', maxZoom: 19
-    }).addTo(cityRouteMap);
+   addBaseTiles(cityRouteMap);
+
 
     const linePoints = [];
     cityRouteStops.value.forEach(stop => {
@@ -5587,6 +5896,43 @@ watch(selectedDay, (d) => fetchDayWeatherRange(d), { immediate: true });
 
             watch(currentTab, () => nextTick(() => lucide.createIcons()));
 watch(recordsSubTab, () => nextTick(() => lucide.createIcons()));
+// ===== 旅程日期軸 =====
+// 每天的貼紙（可自行換成任何 emoji；第 1 天與最後一天固定為飛機）
+const DAY_STICKERS = ['🚃🏯', '🍜🥟', '🎡🚗', '🛍️🧸', '♨️🍡', '🌸⛩️', '🎢🍦', '🌊🐚', '🍣🍶', '🏞️📷'];
+
+// 星期與日期直接沿用 getTargetDateByDay，確保和其他頁面一致
+const dayStripItems = computed(() =>
+    Array.from({ length: mainDayCount.value }, (_, i) => {
+        const day = i + 1;
+        const m = /-(\d{2})-(\d{2}) \((.+?)\)/.exec(getTargetDateByDay(day));
+        return { day, wk: m ? m[3] : '', d: m ? Number(m[2]) : day };
+    })
+);
+
+// 旅程最後一天（依「結束日期」推算；沒設定好就用主行程總天數）
+const dayStripLastDay = computed(() => {
+    const n = Math.round((new Date(tripInfo.value.endDate) - new Date(tripInfo.value.startDate)) / 86400000) + 1;
+    return n > 1 && n <= mainDayCount.value ? n : mainDayCount.value;
+});
+const getDaySticker = (day) =>
+    day === 1 ? '🛬'
+    : day === dayStripLastDay.value ? '🛫'
+    : DAY_STICKERS[(day - 2) % DAY_STICKERS.length];
+
+// 換日時，把選取的那天捲到日期軸中間（天數多、需要左右滑動時才看得出來）
+const dayStripEl = ref(null);
+const scrollDayStripToActive = (smooth = true) => {
+    const box = dayStripEl.value;
+    const node = box && box.querySelector('.ds-node.is-active');
+    if (!node) return;
+    const b = box.getBoundingClientRect(), r = node.getBoundingClientRect();
+    box.scrollTo({
+        left: box.scrollLeft + (r.left + r.width / 2) - (b.left + b.width / 2),
+        behavior: smooth ? 'smooth' : 'auto'
+    });
+};
+watch(selectedDay, () => nextTick(() => scrollDayStripToActive(true)));
+watch(currentTab, (t) => { if (t === 'itinerary') nextTick(() => scrollDayStripToActive(false)); });
 
            const _loadCloud = (d) => {
     if(!d)return;
@@ -5606,6 +5952,7 @@ watch(recordsSubTab, () => nextTick(() => lucide.createIcons()));
     if(d.day_photos){ Object.keys(dayPhotos).forEach(k=>delete dayPhotos[k]); Object.assign(dayPhotos,d.day_photos); }
     if(d.trip_info){ tripInfo.value=d.trip_info; localStorage.setItem(`${APP_ID}__trip_info`,JSON.stringify(d.trip_info)); }
     if(d.trip_cl){ Object.keys(tripClChecked).forEach(k=>delete tripClChecked[k]); Object.assign(tripClChecked,d.trip_cl); localStorage.setItem(`${APP_ID}__trip_cl`,JSON.stringify(d.trip_cl)); }
+if(Array.isArray(d.trip_cl_items)){ tripClItems.value=_cleanArr(d.trip_cl_items, tripClItems.value); localStorage.setItem(`${APP_ID}__trip_cl_items`,JSON.stringify(tripClItems.value)); }
 if(d.transport_data){
         if(Array.isArray(d.transport_data.links)) transportData.links = d.transport_data.links;
         if(Array.isArray(d.transport_data.pdfs))  transportData.pdfs  = d.transport_data.pdfs;
@@ -5822,11 +6169,14 @@ copyWeatherPrompt, applyWeatherPaste,
 copyTransitPrompt, parseTransitPaste,
 openNearbySearch, passSectionCollapsed,STANDARD_TRAVEL_CHECKLIST, TRIP_CL_CATS,
 tripClChecked, tripClCat, filteredTripCl, tripClProgress, toggleTripClItem, resetTripClCat,
+tripClEditId, tripClEditText, startEditTripCl, cancelEditTripCl, saveEditTripCl, deleteTripClItem, resetTripClItems,
+tripClAddText, tripClCatLabel, addTripClItem,
 bookingPdfUploading, onBookingPdfSelected, openBookingPdf,hotelItineraries, passItineraries, getShortDateByDay,citySummary,transportData, transportLinkForm, transportPdfUploading,
 addTransportLink, deleteTransportLink,
 onTransportPdfSelected, deleteTransportPdf, openTransportPdf,
 bookPageSize, bookIncludeCover, bookIncludeBookings, bookDays,
-getBookDayItems, bookTypeIcon, printItineraryBook, mainDayCount, setMainDayCount,shoppingItems, shoppingModal, shoppingForm, openAddShoppingModal, openEditShoppingModal, saveShoppingItem, deleteShoppingItem, toggleShoppingDone, clearDoneShoppingItems, onShoppingImageSelected
+getBookDayItems, bookTypeIcon, printItineraryBook, mainDayCount, setMainDayCount,shoppingItems, shoppingModal, shoppingForm, openAddShoppingModal, openEditShoppingModal, saveShoppingItem, deleteShoppingItem, toggleShoppingDone, clearDoneShoppingItems, onShoppingImageSelected,
+dayStripEl, dayStripItems, getDaySticker
             };
 
         }
